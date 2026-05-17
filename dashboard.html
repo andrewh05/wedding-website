@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wedding Admin Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- FontAwesome for Dashboard Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="admin-body">
+
+  <!-- Admin Sidebar -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <i class="fa-solid fa-bell-concierge"></i>
+        <span>Wedding</span>Hub
+      </div>
+      <div class="sidebar-subtitle">Admin Control Panel</div>
+    </div>
+    
+    <ul class="sidebar-menu">
+      <li>
+        <button class="sidebar-item-btn active" data-tab="overview">
+          <i class="fa-solid fa-chart-pie"></i> Overview
+        </button>
+      </li>
+      <li>
+        <button class="sidebar-item-btn" data-tab="rsvps">
+          <i class="fa-solid fa-users"></i> RSVP Manager
+        </button>
+      </li>
+      <li>
+        <button class="sidebar-item-btn" data-tab="customizer">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Live Customizer
+        </button>
+      </li>
+      <li>
+        <button class="sidebar-item-btn" data-tab="timeline-editor">
+          <i class="fa-solid fa-clock"></i> Timeline Planner
+        </button>
+      </li>
+      <li>
+        <button class="sidebar-item-btn" data-tab="registry-editor">
+          <i class="fa-solid fa-gift"></i> Gift Registry
+        </button>
+      </li>
+    </ul>
+    
+    <div class="sidebar-footer">
+      <a href="index.html" class="sidebar-item-btn" style="text-align: center; justify-content: center; background-color: rgba(255,255,255,0.05);">
+        <i class="fa-solid fa-arrow-left"></i> View Live Site
+      </a>
+    </div>
+  </aside>
+
+  <!-- Admin Main Workspace -->
+  <main class="admin-main">
+    
+    <!-- Topbar -->
+    <header class="admin-topbar">
+      <div class="admin-title" id="tabTitle">Overview & Analytics</div>
+      <a href="index.html" target="_blank" class="admin-view-site">
+        <i class="fa-solid fa-up-right-from-square"></i> Open Live Preview in New Tab
+      </a>
+    </header>
+    
+    <!-- Dynamic Panel Views -->
+    <div class="admin-content">
+      
+      <!-- 1. OVERVIEW TAB PANEL -->
+      <section class="tab-pane active" id="overview">
+        <!-- Analytics summary blocks -->
+        <div class="analytics-grid">
+          <div class="stat-card">
+            <span class="stat-label">Total RSVPs</span>
+            <div class="stat-value" id="statTotalRsvp">0</div>
+            <div class="stat-meta">Responses received</div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Guests Attending</span>
+            <div class="stat-value" id="statAttending" style="color: #2ecc71;">0</div>
+            <div class="stat-meta">Planning to attend</div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Guests Declined</span>
+            <div class="stat-value" id="statDeclined" style="color: #e74c3c;">0</div>
+            <div class="stat-meta">Regretfully declined</div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Days to Big Day</span>
+            <div class="stat-value" id="statDaysToWedding">0</div>
+            <div class="stat-meta">Countdown tracking</div>
+          </div>
+        </div>
+        
+        <div class="analytics-row">
+          <!-- Meal breakdowns (Mock CSS Bar Charts populated via js) -->
+          <div class="panel-card">
+            <h3 class="panel-title">Meal Choice Preferences</h3>
+            <div class="meal-list" id="mealBreakdownContainer">
+              <!-- Populated dynamically via JS -->
+            </div>
+          </div>
+          
+          <!-- Special Dietary info -->
+          <div class="panel-card">
+            <h3 class="panel-title">Dietary Alerts & Song Requests</h3>
+            <div id="quickOverviewList" style="max-height: 200px; overflow-y: auto; font-size: 0.85rem; line-height: 1.6;">
+              <!-- Populated dynamically via JS -->
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- 2. RSVPS MANAGEMENT TAB PANEL -->
+      <section class="tab-pane" id="rsvps">
+        <div class="panel-card" style="padding: 2rem;">
+          <div class="table-actions">
+            <!-- Search & Filters -->
+            <div class="search-box">
+              <i class="fa-solid fa-magnifying-glass search-icon"></i>
+              <input type="text" id="rsvpSearch" class="search-input" placeholder="Search guests by name or email...">
+            </div>
+            
+            <!-- Quick manual entry & export buttons -->
+            <div class="action-buttons">
+              <button class="admin-btn admin-btn-secondary" id="exportCsvBtn">
+                <i class="fa-solid fa-file-csv"></i> Export CSV
+              </button>
+              <button class="admin-btn admin-btn-primary" id="openAddGuestModalBtn">
+                <i class="fa-solid fa-plus"></i> Add Guest RSVP
+              </button>
+            </div>
+          </div>
+          
+          <div class="table-container">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Guest Name</th>
+                  <th>Email</th>
+                  <th>Attendance</th>
+                  <th>Meal Preference</th>
+                  <th>Dietary Restrictions</th>
+                  <th>Song Request</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="rsvpTableBody">
+                <!-- Dynamically populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      
+      <!-- 3. LIVE CUSTOMIZER TAB PANEL -->
+      <section class="tab-pane" id="customizer">
+        <div class="customizer-layout">
+          <!-- Form Configurator Accordion -->
+          <div class="customizer-accordion">
+            
+            <!-- Section 1: Themes & Branding -->
+            <div class="accordion-section">
+              <div class="accordion-header">
+                <span><i class="fa-solid fa-palette" style="margin-right: 0.75rem;"></i> Visual Themes & Palette</span>
+                <i class="fa-solid fa-chevron-down"></i>
+              </div>
+              <div class="accordion-content">
+                <div class="theme-presets">
+                  <div class="theme-card" data-preset="emerald">
+                    <span class="theme-card-name">Classic Emerald & Gold</span>
+                    <div class="theme-swatches">
+                      <span class="swatch" style="background-color: #0b3c2e;"></span>
+                      <span class="swatch" style="background-color: #d4af37;"></span>
+                      <span class="swatch" style="background-color: #fdfbf7;"></span>
+                    </div>
+                  </div>
+                  <div class="theme-card" data-preset="rosegold">
+                    <span class="theme-card-name">Rose Gold & Slate</span>
+                    <div class="theme-swatches">
+                      <span class="swatch" style="background-color: #2c3e50;"></span>
+                      <span class="swatch" style="background-color: #e0a899;"></span>
+                      <span class="swatch" style="background-color: #fafafb;"></span>
+                    </div>
+                  </div>
+                  <div class="theme-card" data-preset="bohemian">
+                    <span class="theme-card-name">Boho Terracotta & Sage</span>
+                    <div class="theme-swatches">
+                      <span class="swatch" style="background-color: #c86b51;"></span>
+                      <span class="swatch" style="background-color: #8a9a86;"></span>
+                      <span class="swatch" style="background-color: #faf7f2;"></span>
+                    </div>
+                  </div>
+                  <div class="theme-card" data-preset="classicdark">
+                    <span class="theme-card-name">Classic Noir (Dark)</span>
+                    <div class="theme-swatches">
+                      <span class="swatch" style="background-color: #121212;"></span>
+                      <span class="swatch" style="background-color: #ffffff;"></span>
+                      <span class="swatch" style="background-color: #d4af37;"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Section 2: Header & Countdown Settings -->
+            <div class="accordion-section">
+              <div class="accordion-header">
+                <span><i class="fa-solid fa-file-signature" style="margin-right: 0.75rem;"></i> Hero Details & Countdown</span>
+                <i class="fa-solid fa-chevron-down"></i>
+              </div>
+              <div class="accordion-content">
+                <form id="heroConfigForm">
+                  <div class="form-group">
+                    <label class="form-label" for="weddingNames">Couples Names (Title)</label>
+                    <input type="text" id="weddingNames" class="form-input" placeholder="e.g. Sarah & David">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="weddingSubtitle">Hero Subtitle</label>
+                    <input type="text" id="weddingSubtitle" class="form-input" placeholder="e.g. Save the Date">
+                  </div>
+                  <div class="form-group-row">
+                    <div class="form-group">
+                      <label class="form-label" for="weddingDate">Wedding Date & Time</label>
+                      <input type="datetime-local" id="weddingDate" class="form-input">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="weddingLocation">Wedding City/State</label>
+                      <input type="text" id="weddingLocation" class="form-input" placeholder="e.g. Sonoma, CA">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="weddingHeroUrl">Cover Backdrop Image URL</label>
+                    <input type="text" id="weddingHeroUrl" class="form-input" placeholder="Enter image URL path...">
+                  </div>
+                </form>
+              </div>
+            </div>
+            
+            <!-- Section 3: Couple Bios & Avatars -->
+            <div class="accordion-section">
+              <div class="accordion-header">
+                <span><i class="fa-solid fa-heart" style="margin-right: 0.75rem;"></i> Couple Biographies</span>
+                <i class="fa-solid fa-chevron-down"></i>
+              </div>
+              <div class="accordion-content">
+                <form id="coupleConfigForm">
+                  <h4 style="color: var(--theme-primary); margin-bottom: 1rem;">Bride Settings</h4>
+                  <div class="form-group">
+                    <label class="form-label" for="brideNameInput">Bride Full Name</label>
+                    <input type="text" id="brideNameInput" class="form-input">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="brideBioInput">Bride Bio</label>
+                    <textarea id="brideBioInput" class="form-input" rows="3" style="resize:vertical;"></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="brideAvatarInput">Bride Photo URL</label>
+                    <input type="text" id="brideAvatarInput" class="form-input">
+                  </div>
+                  
+                  <hr style="margin: 2rem 0; border: none; border-top: 1px dashed #eee;">
+                  
+                  <h4 style="color: var(--theme-primary); margin-bottom: 1rem;">Groom Settings</h4>
+                  <div class="form-group">
+                    <label class="form-label" for="groomNameInput">Groom Full Name</label>
+                    <input type="text" id="groomNameInput" class="form-input">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="groomBioInput">Groom Bio</label>
+                    <textarea id="groomBioInput" class="form-input" rows="3" style="resize:vertical;"></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="groomAvatarInput">Groom Photo URL</label>
+                    <input type="text" id="groomAvatarInput" class="form-input">
+                  </div>
+                </form>
+              </div>
+            </div>
+            
+            <!-- Section 4: Ambient Background Music -->
+            <div class="accordion-section">
+              <div class="accordion-header">
+                <span><i class="fa-solid fa-music" style="margin-right: 0.75rem;"></i> Background Ambient Music</span>
+                <i class="fa-solid fa-chevron-down"></i>
+              </div>
+              <div class="accordion-content">
+                <form id="musicConfigForm">
+                  <div class="form-group">
+                    <label class="form-label" for="musicTrackUrl">Background Music Audio File URL (.mp3)</label>
+                    <input type="text" id="musicTrackUrl" class="form-input" placeholder="Audio path URL...">
+                  </div>
+                </form>
+              </div>
+            </div>
+
+          </div>
+          
+          <!-- Live Preview Sticky Simulator -->
+          <div class="preview-sticky">
+            <div class="preview-browser">
+              <div class="browser-header">
+                <div class="dot-btn dot-red"></div>
+                <div class="dot-btn dot-yellow"></div>
+                <div class="dot-btn dot-green"></div>
+                <div class="browser-address">localhost:3000/wedding-site</div>
+              </div>
+              <div class="browser-body">
+                <iframe class="browser-iframe" id="livePreviewIframe" src="index.html"></iframe>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </section>
+      
+      <!-- 4. TIMELINE CRUD TAB PANEL -->
+      <section class="tab-pane" id="timeline-editor">
+        <div class="panel-card" style="max-width: 800px; margin: 0 auto;">
+          <div class="table-actions">
+            <h3 class="panel-title" style="margin-bottom:0;">Timeline Schedules</h3>
+            <button class="admin-btn admin-btn-primary" id="openAddEventModalBtn">
+              <i class="fa-solid fa-plus"></i> Add Timeline Event
+            </button>
+          </div>
+          <div class="crud-list" id="timelineCrudList">
+            <!-- Dynamically populated via JS -->
+          </div>
+        </div>
+      </section>
+      
+      <!-- 5. REGISTRY CRUD TAB PANEL -->
+      <section class="tab-pane" id="registry-editor">
+        <div class="panel-card" style="max-width: 800px; margin: 0 auto;">
+          <div class="table-actions">
+            <h3 class="panel-title" style="margin-bottom:0;">Gift Registry Cards</h3>
+            <button class="admin-btn admin-btn-primary" id="openAddRegistryModalBtn">
+              <i class="fa-solid fa-plus"></i> Add Gift Item
+            </button>
+          </div>
+          <div class="crud-list" id="registryCrudList">
+            <!-- Dynamically populated via JS -->
+          </div>
+        </div>
+      </section>
+      
+    </div>
+  </main>
+
+  <!-- ADD / EDIT MANUAL GUEST RSVP DIALOG MODAL -->
+  <div class="modal-overlay" id="rsvpModal">
+    <div class="modal-box">
+      <h3 class="modal-title" id="rsvpModalTitle">Add Guest RSVP Manually</h3>
+      <form id="adminRsvpForm">
+        <input type="hidden" id="rsvpEditId" value="">
+        <div class="form-group-row">
+          <div class="form-group">
+            <label class="form-label" for="manualFirstName">First Name</label>
+            <input type="text" id="manualFirstName" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="manualLastName">Last Name</label>
+            <input type="text" id="manualLastName" class="form-input" required>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="manualEmail">Email Address</label>
+          <input type="email" id="manualEmail" class="form-input" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Will they attend?</label>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="manualAttendance" id="attendingRadio" value="Attending" checked>
+              Joyfully Accepts
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="manualAttendance" id="decliningRadio" value="Not Attending">
+              Regretfully Declines
+            </label>
+          </div>
+        </div>
+        
+        <div id="manualAttendingDetails">
+          <div class="form-group">
+            <label class="form-label" for="manualMeal">Meal Selection</label>
+            <select id="manualMeal" class="form-input">
+              <option value="Beef">Garlic Herb Grilled Ribeye</option>
+              <option value="Fish">Pan-Seared Pacific Salmon</option>
+              <option value="Vegetarian">Wild Mushroom Risotto (V)</option>
+              <option value="Vegan">Roasted Butternut Squash Steak (VG)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="manualDietary">Dietary Restrictions</label>
+            <input type="text" id="manualDietary" class="form-input" placeholder="e.g. Nut allergy (leave empty if none)">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="manualSong">Song Request</label>
+            <input type="text" id="manualSong" class="form-input" placeholder="Song title & artist">
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="closeRsvpModalBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save RSVP</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADD / EDIT TIMELINE EVENT MODAL -->
+  <div class="modal-overlay" id="timelineModal">
+    <div class="modal-box">
+      <h3 class="modal-title" id="timelineModalTitle">Add Timeline Event</h3>
+      <form id="adminTimelineForm">
+        <input type="hidden" id="timelineEditIndex" value="">
+        <div class="form-group">
+          <label class="form-label" for="eventTime">Time (e.g. 05:00 PM)</label>
+          <input type="text" id="eventTime" class="form-input" required placeholder="e.g. 04:30 PM">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="eventTitle">Event Title</label>
+          <input type="text" id="eventTitle" class="form-input" required placeholder="e.g. Ring Exchange">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="eventDesc">Short Description</label>
+          <textarea id="eventDesc" class="form-input" required rows="3" placeholder="Describe the wedding schedule event..."></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="closeTimelineModalBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Event</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADD / EDIT REGISTRY ITEM MODAL -->
+  <div class="modal-overlay" id="registryModal">
+    <div class="modal-box">
+      <h3 class="modal-title" id="registryModalTitle">Add Gift Item / Registry Card</h3>
+      <form id="adminRegistryForm">
+        <input type="hidden" id="registryEditIndex" value="">
+        <div class="form-group">
+          <label class="form-label" for="registrySite">Store/Site Name (e.g. Amazon, Target)</label>
+          <input type="text" id="registrySite" class="form-input" required placeholder="e.g. Honeyfund">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="registryTitle">Item/Goal Name</label>
+          <input type="text" id="registryTitle" class="form-input" required placeholder="e.g. European Travel Fund">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="registryDesc">Short Description</label>
+          <textarea id="registryDesc" class="form-input" required rows="2" placeholder="Helpful details for your guests..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="registryLink">Registry Web Address Link (URL)</label>
+          <input type="text" id="registryLink" class="form-input" placeholder="e.g. https://amazon.com/registry/..." value="#">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="closeRegistryModalBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Gift Item</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>
