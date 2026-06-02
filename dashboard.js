@@ -38,7 +38,10 @@ function initData() {
       config = JSON.parse(savedConfig);
       // Seamlessly upgrade Unsplash placeholder assets to our stunning generated local assets
       if (config.heroImage && config.heroImage.includes("unsplash.com")) {
-        config.heroImage = "./assets/hero_bg.png";
+        config.heroImage = "./assets/hero_bg.jpeg";
+      }
+      if (config.heroImage && config.heroImage.endsWith("hero_bg.png")) {
+        config.heroImage = "./assets/hero_bg.jpeg";
       }
       if (config.bride && config.bride.avatar && config.bride.avatar.includes("unsplash.com")) {
         config.bride.avatar = "./assets/bride.png";
@@ -58,7 +61,7 @@ function initData() {
       location: "Sonoma, CA",
       venue: "The Secret Garden, Sonoma",
       subtitle: "Save the Date",
-      heroImage: "./assets/hero_bg.png",
+      heroImage: "./assets/hero_bg.jpeg",
       musicUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
       musicName: "Preset Romance Instrumental",
       theme: "emerald",

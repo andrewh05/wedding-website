@@ -10,7 +10,7 @@ const DEFAULT_CONFIG = {
   location: "Sonoma, CA",
   venue: "The Secret Garden, Sonoma",
   subtitle: "Save the Date",
-  heroImage: "./assets/hero_bg.png",
+  heroImage: "./assets/hero_bg.jpeg",
   musicUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
   musicName: "Preset Romance Instrumental",
   theme: "emerald", // 'emerald', 'rosegold', 'bohemian', 'classicdark'
@@ -102,8 +102,11 @@ function loadConfiguration() {
     try {
       currentConfig = JSON.parse(saved);
       // Seamlessly upgrade Unsplash placeholder assets to our stunning generated local assets
-      if (currentConfig.heroImage && currentConfig.heroImage.includes("unsplash.com")) {
-        currentConfig.heroImage = "./assets/hero_bg.png";
+      if (
+        currentConfig.heroImage &&
+        (currentConfig.heroImage.includes("unsplash.com") || currentConfig.heroImage.endsWith("hero_bg.png"))
+      ) {
+        currentConfig.heroImage = "./assets/hero_bg.jpeg";
       }
       if (currentConfig.bride && currentConfig.bride.avatar && currentConfig.bride.avatar.includes("unsplash.com")) {
         currentConfig.bride.avatar = "./assets/bride.png";
