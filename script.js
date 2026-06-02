@@ -5,7 +5,7 @@
 
 // --- DEFAULT DEMO CONFIGURATION DATA ---
 const DEFAULT_CONFIG = {
-  names: "Sarah & David",
+  names: "Elissa & Elie",
   date: "2026-10-17T16:00:00",
   location: "Sonoma, CA",
   venue: "The Secret Garden, Sonoma",
@@ -36,6 +36,50 @@ const DEFAULT_CONFIG = {
     { site: "Pottery Barn", title: "Indoor & Garden Furniture", desc: "For patio seating and cozy bedroom furniture styles we love.", link: "#" }
   ]
 };
+
+const CONFIG_STORAGE_KEY = "wedding_website_config";
+const DEFAULT_CONFIG_SIGNATURE = JSON.stringify(DEFAULT_CONFIG);
+
+function cloneDefaultConfig() {
+  return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+}
+
+function mergeConfigWithDefaults(config) {
+  return {
+    ...cloneDefaultConfig(),
+    ...config,
+    bride: {
+      ...DEFAULT_CONFIG.bride,
+      ...(config.bride || {})
+    },
+    groom: {
+      ...DEFAULT_CONFIG.groom,
+      ...(config.groom || {})
+    }
+  };
+}
+
+function normalizeConfig(config) {
+  const nextConfig = mergeConfigWithDefaults(config);
+
+  if (
+    nextConfig.heroImage &&
+    (nextConfig.heroImage.includes("unsplash.com") || nextConfig.heroImage.endsWith("hero_bg.png"))
+  ) {
+    nextConfig.heroImage = "./assets/hero_bg.jpeg";
+  }
+  if (nextConfig.bride.avatar && nextConfig.bride.avatar.includes("unsplash.com")) {
+    nextConfig.bride.avatar = "./assets/bride.png";
+  }
+  if (nextConfig.groom.avatar && nextConfig.groom.avatar.includes("unsplash.com")) {
+    nextConfig.groom.avatar = "./assets/groom.png";
+  }
+
+  nextConfig._defaultConfigSignature = DEFAULT_CONFIG_SIGNATURE;
+  nextConfig._customized = Boolean(config._customized);
+
+  return nextConfig;
+}
 
 // --- PRESET THEMES SPECIFICATIONS ---
 const THEME_PRESETS = {
@@ -93,35 +137,34 @@ const THEME_PRESETS = {
   }
 };
 
-let currentConfig = { ...DEFAULT_CONFIG };
+let currentConfig = cloneDefaultConfig();
 
 // --- DOM CONFIGURATION LOADER ---
 function loadConfiguration() {
-  const saved = localStorage.getItem("wedding_website_config");
+  const params = new URLSearchParams(window.location.search);
+  if (params.has("resetConfig")) {
+    localStorage.removeItem(CONFIG_STORAGE_KEY);
+  }
+
+  const saved = localStorage.getItem(CONFIG_STORAGE_KEY);
   if (saved) {
     try {
-      currentConfig = JSON.parse(saved);
-      // Seamlessly upgrade Unsplash placeholder assets to our stunning generated local assets
-      if (
-        currentConfig.heroImage &&
-        (currentConfig.heroImage.includes("unsplash.com") || currentConfig.heroImage.endsWith("hero_bg.png"))
-      ) {
-        currentConfig.heroImage = "./assets/hero_bg.jpeg";
-      }
-      if (currentConfig.bride && currentConfig.bride.avatar && currentConfig.bride.avatar.includes("unsplash.com")) {
-        currentConfig.bride.avatar = "./assets/bride.png";
-      }
-      if (currentConfig.groom && currentConfig.groom.avatar && currentConfig.groom.avatar.includes("unsplash.com")) {
-        currentConfig.groom.avatar = "./assets/groom.png";
-      }
-      localStorage.setItem("wedding_website_config", JSON.stringify(currentConfig));
+      const savedConfig = JSON.parse(saved);
+      const savedDefaultsAreStale =
+        savedConfig._defaultConfigSignature !== DEFAULT_CONFIG_SIGNATURE && !savedConfig._customized;
+
+      currentConfig = savedDefaultsAreStale ? cloneDefaultConfig() : savedConfig;
+      currentConfig = normalizeConfig(currentConfig);
+      localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(currentConfig));
     } catch (e) {
       console.error("Error parsing saved config:", e);
-      currentConfig = { ...DEFAULT_CONFIG };
+      currentConfig = normalizeConfig(cloneDefaultConfig());
+      localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(currentConfig));
     }
   } else {
     // Save defaults to storage initially so dashboard is synchronized
-    localStorage.setItem("wedding_website_config", JSON.stringify(DEFAULT_CONFIG));
+    currentConfig = normalizeConfig(cloneDefaultConfig());
+    localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(currentConfig));
   }
   
   applyTheme(currentConfig.theme || "emerald");
@@ -639,7 +682,7 @@ if (musicPlayerBtn && bgAudio) {
 // --- LIVE EDITING STORAGE LISTENER ---
 // Listens for updates from Dashboard to update UI themes and texts instantly
 window.addEventListener("storage", (e) => {
-  if (e.key === "wedding_website_config") {
+  if (e.key === CONFIG_STORAGE_KEY) {
     loadConfiguration();
   }
 });

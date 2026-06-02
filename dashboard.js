@@ -16,6 +16,82 @@ const MOCK_RSVPS = [
 let config = {};
 let rsvps = [];
 
+const CONFIG_STORAGE_KEY = "wedding_website_config";
+const DEFAULT_CONFIG = {
+  names: "Elissa & Elie",
+  date: "2026-10-17T16:00:00",
+  location: "Sonoma, CA",
+  venue: "The Secret Garden, Sonoma",
+  subtitle: "Save the Date",
+  heroImage: "./assets/hero_bg.jpeg",
+  musicUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+  musicName: "Preset Romance Instrumental",
+  theme: "emerald",
+  bride: {
+    name: "Sarah Jenkins",
+    bio: "Sarah is a designer who loves watercolor, botanical gardens, and morning espresso. She cannot wait to marry her best friend and celebrate under the Sonoma redwoods.",
+    avatar: "./assets/bride.png"
+  },
+  groom: {
+    name: "David Miller",
+    bio: "David is a software architect who enjoys hiking coastal trails, roasting specialty coffee, and playing guitar. He is thrilled to embark on life's biggest adventure yet.",
+    avatar: "./assets/groom.png"
+  },
+  timeline: [
+    { time: "04:00 PM", title: "The Ceremony", desc: "The Vows & Exchange of Rings at our lovely outdoor redwood canopy." },
+    { time: "05:00 PM", title: "Cocktail Hour", desc: "Enjoy live acoustic music, local wines, and gourmet signature appetizers." },
+    { time: "06:30 PM", title: "Grand Reception & Dinner", desc: "A gourmet 3-course dinner under the fairy lights, followed by toasts." },
+    { time: "09:00 PM", title: "Dancing & Send-off", desc: "Dancing the night away with the live band followed by a sparkler send-off." }
+  ],
+  registry: [
+    { site: "Honeyfund", title: "Honeymoon Registry", desc: "Help us fund our dream honeymoon exploring the Greek Islands!", link: "#" },
+    { site: "Amazon", title: "Home Essentials", desc: "Kitchenware, smart home devices, and linens for our cozy new apartment.", link: "#" },
+    { site: "Pottery Barn", title: "Indoor & Garden Furniture", desc: "For patio seating and cozy bedroom furniture styles we love.", link: "#" }
+  ]
+};
+const DEFAULT_CONFIG_SIGNATURE = JSON.stringify(DEFAULT_CONFIG);
+
+function cloneDefaultConfig() {
+  return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+}
+
+function mergeConfigWithDefaults(nextConfig) {
+  return {
+    ...cloneDefaultConfig(),
+    ...nextConfig,
+    bride: {
+      ...DEFAULT_CONFIG.bride,
+      ...(nextConfig.bride || {})
+    },
+    groom: {
+      ...DEFAULT_CONFIG.groom,
+      ...(nextConfig.groom || {})
+    }
+  };
+}
+
+function normalizeConfig(nextConfig) {
+  const normalizedConfig = mergeConfigWithDefaults(nextConfig);
+
+  if (
+    normalizedConfig.heroImage &&
+    (normalizedConfig.heroImage.includes("unsplash.com") || normalizedConfig.heroImage.endsWith("hero_bg.png"))
+  ) {
+    normalizedConfig.heroImage = "./assets/hero_bg.jpeg";
+  }
+  if (normalizedConfig.bride.avatar && normalizedConfig.bride.avatar.includes("unsplash.com")) {
+    normalizedConfig.bride.avatar = "./assets/bride.png";
+  }
+  if (normalizedConfig.groom.avatar && normalizedConfig.groom.avatar.includes("unsplash.com")) {
+    normalizedConfig.groom.avatar = "./assets/groom.png";
+  }
+
+  normalizedConfig._defaultConfigSignature = DEFAULT_CONFIG_SIGNATURE;
+  normalizedConfig._customized = Boolean(nextConfig._customized);
+
+  return normalizedConfig;
+}
+
 // --- BOOTSTRAP INITIALIZATION ---
 document.addEventListener("DOMContentLoaded", () => {
   initData();
@@ -32,62 +108,28 @@ document.addEventListener("DOMContentLoaded", () => {
 // --- DATA INITIALIZER ---
 function initData() {
   // Load configuration
-  const savedConfig = localStorage.getItem("wedding_website_config");
+  const params = new URLSearchParams(window.location.search);
+  if (params.has("resetConfig")) {
+    localStorage.removeItem(CONFIG_STORAGE_KEY);
+  }
+
+  const savedConfig = localStorage.getItem(CONFIG_STORAGE_KEY);
   if (savedConfig) {
     try {
-      config = JSON.parse(savedConfig);
-      // Seamlessly upgrade Unsplash placeholder assets to our stunning generated local assets
-      if (config.heroImage && config.heroImage.includes("unsplash.com")) {
-        config.heroImage = "./assets/hero_bg.jpeg";
-      }
-      if (config.heroImage && config.heroImage.endsWith("hero_bg.png")) {
-        config.heroImage = "./assets/hero_bg.jpeg";
-      }
-      if (config.bride && config.bride.avatar && config.bride.avatar.includes("unsplash.com")) {
-        config.bride.avatar = "./assets/bride.png";
-      }
-      if (config.groom && config.groom.avatar && config.groom.avatar.includes("unsplash.com")) {
-        config.groom.avatar = "./assets/groom.png";
-      }
-      localStorage.setItem("wedding_website_config", JSON.stringify(config));
+      const parsedConfig = JSON.parse(savedConfig);
+      const savedDefaultsAreStale =
+        parsedConfig._defaultConfigSignature !== DEFAULT_CONFIG_SIGNATURE && !parsedConfig._customized;
+
+      config = normalizeConfig(savedDefaultsAreStale ? cloneDefaultConfig() : parsedConfig);
+      saveConfig(false);
     } catch (e) {
-      config = {};
+      config = normalizeConfig(cloneDefaultConfig());
+      saveConfig(false);
     }
   } else {
     // Falls back to defaults
-    config = {
-      names: "Sarah & David",
-      date: "2026-10-17T16:00:00",
-      location: "Sonoma, CA",
-      venue: "The Secret Garden, Sonoma",
-      subtitle: "Save the Date",
-      heroImage: "./assets/hero_bg.jpeg",
-      musicUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-      musicName: "Preset Romance Instrumental",
-      theme: "emerald",
-      bride: {
-        name: "Sarah Jenkins",
-        bio: "Sarah is a designer who loves watercolor, botanical gardens, and morning espresso. She cannot wait to marry her best friend and celebrate under the Sonoma redwoods.",
-        avatar: "./assets/bride.png"
-      },
-      groom: {
-        name: "David Miller",
-        bio: "David is a software architect who enjoys hiking coastal trails, roasting specialty coffee, and playing guitar. He is thrilled to embark on life's biggest adventure yet.",
-        avatar: "./assets/groom.png"
-      },
-      timeline: [
-        { time: "04:00 PM", title: "The Ceremony", desc: "The Vows & Exchange of Rings at our lovely outdoor redwood canopy." },
-        { time: "05:00 PM", title: "Cocktail Hour", desc: "Enjoy live acoustic music, local wines, and gourmet signature appetizers." },
-        { time: "06:30 PM", title: "Grand Reception & Dinner", desc: "A gourmet 3-course dinner under the fairy lights, followed by toasts." },
-        { time: "09:00 PM", title: "Dancing & Send-off", desc: "Dancing the night away with the live band followed by a sparkler send-off." }
-      ],
-      registry: [
-        { site: "Honeyfund", title: "Honeymoon Registry", desc: "Help us fund our dream honeymoon exploring the Greek Islands!", link: "#" },
-        { site: "Amazon", title: "Home Essentials", desc: "Kitchenware, smart home devices, and linens for our cozy new apartment.", link: "#" },
-        { site: "Pottery Barn", title: "Indoor & Garden Furniture", desc: "For patio seating and cozy bedroom furniture styles we love.", link: "#" }
-      ]
-    };
-    saveConfig();
+    config = normalizeConfig(cloneDefaultConfig());
+    saveConfig(false);
   }
 
   // Load RSVPs
@@ -106,8 +148,12 @@ function initData() {
 }
 
 // Save core configuration to LocalStorage
-function saveConfig() {
-  localStorage.setItem("wedding_website_config", JSON.stringify(config));
+function saveConfig(markCustomized = true) {
+  config = normalizeConfig({
+    ...config,
+    _customized: markCustomized || config._customized
+  });
+  localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(config));
   
   // Refresh sticky preview iframe seamlessly
   const previewIframe = document.getElementById("livePreviewIframe");
