@@ -519,6 +519,11 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--theme-text-light);
 }
 
+.timeline-link {
+  margin-top: 0.85rem;
+  font-size: 0.9rem;
+}
+
 /* Gallery Section */
 .gallery-filters {
   display: flex;

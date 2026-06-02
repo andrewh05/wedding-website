@@ -6,9 +6,9 @@
 // --- DEFAULT DEMO CONFIGURATION DATA ---
 const DEFAULT_CONFIG = {
   names: "Elissa & Elie",
-  date: "2026-10-17T16:00:00",
-  location: "Sonoma, CA",
-  venue: "The Secret Garden, Sonoma",
+  date: "2026-08-01T16:00:00",
+  location: "Andaket, Akkar",
+  venue: "Andaket, Akkar",
   subtitle: "Save the Date",
   heroImage: "./assets/hero_bg.jpeg",
   musicUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
@@ -25,10 +25,18 @@ const DEFAULT_CONFIG = {
     avatar: "./assets/groom.png"
   },
   timeline: [
-    { time: "04:00 PM", title: "The Ceremony", desc: "The Vows & Exchange of Rings at our lovely outdoor redwood canopy." },
-    { time: "05:00 PM", title: "Cocktail Hour", desc: "Enjoy live acoustic music, local wines, and gourmet signature appetizers." },
-    { time: "06:30 PM", title: "Grand Reception & Dinner", desc: "A gourmet 3-course dinner under the fairy lights, followed by toasts." },
-    { time: "09:00 PM", title: "Dancing & Send-off", desc: "Dancing the night away with the live band followed by a sparkler send-off." }
+    {
+      time: "07:00 PM",
+      title: "Church Ceremony",
+      desc: "Join us for the wedding ceremony.",
+      link: "https://maps.app.goo.gl/gFrVCpBx1EbSKi2n7"
+    },
+    {
+      time: "08:15 PM",
+      title: "Restaurant Reception",
+      desc: "Dinner and celebration with family and friends.",
+      link: "https://maps.app.goo.gl/BbCRaZZmNiuwDoFo7"
+    }
   ],
   registry: [
     { site: "Honeyfund", title: "Honeymoon Registry", desc: "Help us fund our dream honeymoon exploring the Greek Islands!", link: "#" },
@@ -290,6 +298,7 @@ function applyContent(config) {
           <span class="timeline-time">${item.time}</span>
           <h3 class="timeline-title">${item.title}</h3>
           <p class="timeline-desc">${item.desc}</p>
+          ${item.link ? `<a href="${item.link}" target="_blank" rel="noopener" class="btn btn-text timeline-link"><i class="fa-solid fa-location-dot"></i> Open map</a>` : ""}
         </div>
       `;
       timelineContainer.appendChild(timelineItem);
