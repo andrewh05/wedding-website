@@ -96,11 +96,8 @@ function normalizeConfig(nextConfig) {
 document.addEventListener("DOMContentLoaded", () => {
   initData();
   setupNavigation();
-  setupAccordion();
   renderOverview();
   renderRsvpTable();
-  setupCustomizerBindings();
-  renderTimelineCrud();
   renderRegistryCrud();
   setupModals();
 });
@@ -154,22 +151,6 @@ function saveConfig(markCustomized = true) {
     _customized: markCustomized || config._customized
   });
   localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(config));
-  
-  // Refresh sticky preview iframe seamlessly
-  const previewIframe = document.getElementById("livePreviewIframe");
-  if (previewIframe && previewIframe.contentWindow) {
-    // Dispatch state triggers directly inside the iframe window if accessible
-    try {
-      if (typeof previewIframe.contentWindow.loadConfiguration === "function") {
-        previewIframe.contentWindow.loadConfiguration();
-      } else {
-        previewIframe.contentWindow.location.reload();
-      }
-    } catch (e) {
-      // In case of any context barriers, reload iframe is robust
-      previewIframe.src = previewIframe.src;
-    }
-  }
 }
 
 // --- SIDEBAR TABS SWITCHING ---
@@ -195,34 +176,6 @@ function setupNavigation() {
       // Re-trigger visual rendering if switching pages
       if (tabId === "overview") renderOverview();
       if (tabId === "rsvps") renderRsvpTable();
-    });
-  });
-}
-
-// --- VISUAL ACCORDIONS FOR CUSTOMIZER ---
-function setupAccordion() {
-  const headers = document.querySelectorAll(".accordion-header");
-  
-  // Initialize first accordion open, others closed
-  headers.forEach((header, index) => {
-    const content = header.nextElementSibling;
-    const icon = header.querySelector(".fa-chevron-down");
-    
-    if (index === 0) {
-      content.style.display = "block";
-      icon.style.transform = "rotate(180deg)";
-    } else {
-      content.style.display = "none";
-      icon.style.transform = "rotate(0deg)";
-    }
-    
-    header.addEventListener("click", () => {
-      const isOpen = content.style.display === "block";
-      
-      // Toggle
-      content.style.display = isOpen ? "none" : "block";
-      icon.style.transform = isOpen ? "rotate(0deg)" : "rotate(180deg)";
-      icon.style.transition = "transform 0.3s ease";
     });
   });
 }
@@ -421,167 +374,6 @@ if (exportCsvBtn) {
   });
 }
 
-// --- LIVE CUSTOMIZER CONFIG BUILDER ---
-function setupCustomizerBindings() {
-  // 1. Theme Presets Select Cards
-  const themeCards = document.querySelectorAll(".theme-card");
-  themeCards.forEach(card => {
-    const preset = card.getAttribute("data-preset");
-    if (config.theme === preset) card.classList.add("active");
-
-    card.addEventListener("click", () => {
-      themeCards.forEach(c => c.classList.remove("active"));
-      card.classList.add("active");
-      config.theme = preset;
-      saveConfig();
-    });
-  });
-
-  // 2. Hero Fields bindings
-  const namesInput = document.getElementById("weddingNames");
-  const subtitleInput = document.getElementById("weddingSubtitle");
-  const dateInput = document.getElementById("weddingDate");
-  const locationInput = document.getElementById("weddingLocation");
-  const heroUrlInput = document.getElementById("weddingHeroUrl");
-
-  // Populate inputs on load
-  if (namesInput) namesInput.value = config.names;
-  if (subtitleInput) subtitleInput.value = config.subtitle || "Save the Date";
-  if (dateInput) dateInput.value = config.date ? config.date.slice(0, 16) : "";
-  if (locationInput) locationInput.value = config.location;
-  if (heroUrlInput) heroUrlInput.value = config.heroImage;
-
-  // Bind key inputs to config changes
-  const inputs = [
-    { el: namesInput, key: "names" },
-    { el: subtitleInput, key: "subtitle" },
-    { el: dateInput, key: "date" },
-    { el: locationInput, key: "location" },
-    { el: heroUrlInput, key: "heroImage" }
-  ];
-
-  inputs.forEach(item => {
-    if (item.el) {
-      item.el.addEventListener("input", (e) => {
-        config[item.key] = e.target.value;
-        saveConfig();
-      });
-    }
-  });
-
-  // 3. Couple details inputs
-  const brideName = document.getElementById("brideNameInput");
-  const brideBio = document.getElementById("brideBioInput");
-  const brideAvatar = document.getElementById("brideAvatarInput");
-  const groomName = document.getElementById("groomNameInput");
-  const groomBio = document.getElementById("groomBioInput");
-  const groomAvatar = document.getElementById("groomAvatarInput");
-
-  if (brideName && config.bride) {
-    brideName.value = config.bride.name;
-    brideBio.value = config.bride.bio;
-    brideAvatar.value = config.bride.avatar;
-    
-    brideName.addEventListener("input", (e) => { config.bride.name = e.target.value; saveConfig(); });
-    brideBio.addEventListener("input", (e) => { config.bride.bio = e.target.value; saveConfig(); });
-    brideAvatar.addEventListener("input", (e) => { config.bride.avatar = e.target.value; saveConfig(); });
-  }
-
-  if (groomName && config.groom) {
-    groomName.value = config.groom.name;
-    groomBio.value = config.groom.bio;
-    groomAvatar.value = config.groom.avatar;
-
-    groomName.addEventListener("input", (e) => { config.groom.name = e.target.value; saveConfig(); });
-    groomBio.addEventListener("input", (e) => { config.groom.bio = e.target.value; saveConfig(); });
-    groomAvatar.addEventListener("input", (e) => { config.groom.avatar = e.target.value; saveConfig(); });
-  }
-
-  // 4. Background music track inputs
-  const musicUrlInput = document.getElementById("musicTrackUrl");
-  if (musicUrlInput) {
-    musicUrlInput.value = config.musicUrl || "";
-    musicUrlInput.addEventListener("input", (e) => {
-      config.musicUrl = e.target.value;
-      saveConfig();
-    });
-  }
-}
-
-// --- TIMELINE CRUD SCHEDULER RENDERER ---
-const timelineCrudList = document.getElementById("timelineCrudList");
-
-function renderTimelineCrud() {
-  if (!timelineCrudList) return;
-  timelineCrudList.innerHTML = "";
-
-  if (!config.timeline || config.timeline.length === 0) {
-    timelineCrudList.innerHTML = "<p style='color: #888; font-style: italic;'>No timeline events defined.</p>";
-    return;
-  }
-
-  config.timeline.forEach((item, index) => {
-    const div = document.createElement("div");
-    div.className = "crud-item";
-    div.innerHTML = `
-      <div class="crud-info">
-        <span class="crud-title">${item.title}</span>
-        <span class="crud-sub"><i class="fa-solid fa-clock"></i> ${item.time} &bull; ${item.desc.substring(0, 45)}...</span>
-      </div>
-      <div class="crud-actions">
-        <button class="op-btn op-btn-edit" onclick="editTimelineEvent(${index})" title="Edit event"><i class="fa-solid fa-pen"></i></button>
-        <button class="op-btn op-btn-delete" onclick="deleteTimelineEvent(${index})" title="Delete event"><i class="fa-solid fa-trash"></i></button>
-      </div>
-    `;
-    timelineCrudList.appendChild(div);
-  });
-}
-
-// Global actions exposed
-window.deleteTimelineEvent = function(index) {
-  if (confirm("Are you sure you want to remove this schedule event?")) {
-    config.timeline.splice(index, 1);
-    saveConfig();
-    renderTimelineCrud();
-  }
-};
-
-window.editTimelineEvent = function(index) {
-  const item = config.timeline[index];
-  document.getElementById("timelineEditIndex").value = index;
-  document.getElementById("eventTime").value = item.time;
-  document.getElementById("eventTitle").value = item.title;
-  document.getElementById("eventDesc").value = item.desc;
-  
-  document.getElementById("timelineModalTitle").textContent = "Edit Timeline Event";
-  document.getElementById("timelineModal").classList.add("active");
-};
-
-// Add / Edit submission handlers
-const adminTimelineForm = document.getElementById("adminTimelineForm");
-if (adminTimelineForm) {
-  adminTimelineForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const indexStr = document.getElementById("timelineEditIndex").value;
-    const time = document.getElementById("eventTime").value.trim();
-    const title = document.getElementById("eventTitle").value.trim();
-    const desc = document.getElementById("eventDesc").value.trim();
-
-    const newEvent = { time, title, desc };
-
-    if (indexStr !== "") {
-      config.timeline[parseInt(indexStr)] = newEvent;
-    } else {
-      if (!config.timeline) config.timeline = [];
-      config.timeline.push(newEvent);
-    }
-
-    saveConfig();
-    renderTimelineCrud();
-    document.getElementById("timelineModal").classList.remove("active");
-  });
-}
-
 // --- REGISTRY CRUD RENDERER ---
 const registryCrudList = document.getElementById("registryCrudList");
 
@@ -761,7 +553,6 @@ if (adminRsvpForm) {
 function setupModals() {
   const modals = [
     { trigger: "openAddGuestModalBtn", modal: "rsvpModal", form: "adminRsvpForm", title: "rsvpModalTitle", titleTxt: "Add Guest RSVP Manually", resetId: "rsvpEditId" },
-    { trigger: "openAddEventModalBtn", modal: "timelineModal", form: "adminTimelineForm", title: "timelineModalTitle", titleTxt: "Add Timeline Event", resetId: "timelineEditIndex" },
     { trigger: "openAddRegistryModalBtn", modal: "registryModal", form: "adminRegistryForm", title: "registryModalTitle", titleTxt: "Add Gift Item / Registry Card", resetId: "registryEditIndex" }
   ];
 
@@ -799,7 +590,6 @@ function setupModals() {
   // Modal Cancelers
   const cancelers = [
     { btn: "closeRsvpModalBtn", modal: "rsvpModal" },
-    { btn: "closeTimelineModalBtn", modal: "timelineModal" },
     { btn: "closeRegistryModalBtn", modal: "registryModal" }
   ];
 
