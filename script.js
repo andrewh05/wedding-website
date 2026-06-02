@@ -139,8 +139,12 @@ const THEME_PRESETS = {
 
 let currentConfig = cloneDefaultConfig();
 
+function saveLocalConfig(nextConfig) {
+  localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(nextConfig));
+}
+
 // --- DOM CONFIGURATION LOADER ---
-function loadConfiguration() {
+async function loadConfiguration() {
   const params = new URLSearchParams(window.location.search);
   if (params.has("resetConfig")) {
     localStorage.removeItem(CONFIG_STORAGE_KEY);
@@ -155,16 +159,36 @@ function loadConfiguration() {
 
       currentConfig = savedDefaultsAreStale ? cloneDefaultConfig() : savedConfig;
       currentConfig = normalizeConfig(currentConfig);
-      localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(currentConfig));
+      saveLocalConfig(currentConfig);
     } catch (e) {
       console.error("Error parsing saved config:", e);
       currentConfig = normalizeConfig(cloneDefaultConfig());
-      localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(currentConfig));
+      saveLocalConfig(currentConfig);
     }
   } else {
     // Save defaults to storage initially so dashboard is synchronized
     currentConfig = normalizeConfig(cloneDefaultConfig());
-    localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(currentConfig));
+    saveLocalConfig(currentConfig);
+  }
+
+  if (window.WeddingSupabase?.isEnabled()) {
+    try {
+      const [remoteConfig, remoteRegistry] = await Promise.all([
+        window.WeddingSupabase.getSiteConfig(),
+        window.WeddingSupabase.listRegistryItems()
+      ]);
+
+      if (remoteConfig) {
+        currentConfig = normalizeConfig(remoteConfig);
+      }
+      if (remoteRegistry && remoteRegistry.length > 0) {
+        currentConfig.registry = remoteRegistry;
+      }
+
+      saveLocalConfig(currentConfig);
+    } catch (error) {
+      console.error("Supabase configuration load failed:", error);
+    }
   }
   
   applyTheme(currentConfig.theme || "emerald");
@@ -579,7 +603,7 @@ const rsvpSuccessAlert = document.getElementById("rsvpSuccessAlert");
 const rsvpErrorAlert = document.getElementById("rsvpErrorAlert");
 
 if (rsvpForm) {
-  rsvpForm.addEventListener("submit", (e) => {
+  rsvpForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     
     const firstName = document.getElementById("guestFirstName").value.trim();
@@ -595,7 +619,7 @@ if (rsvpForm) {
     
     // Attending details data extraction
     let guestResponse = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
       firstName,
       lastName,
       email,
@@ -617,19 +641,28 @@ if (rsvpForm) {
       guestResponse.song = "-";
     }
     
-    // Save to local Storage array list
-    let rsvps = [];
-    const savedRsvps = localStorage.getItem("wedding_rsvps");
-    if (savedRsvps) {
-      try {
-        rsvps = JSON.parse(savedRsvps);
-      } catch (err) {
-        rsvps = [];
+    try {
+      if (window.WeddingSupabase?.isEnabled()) {
+        await window.WeddingSupabase.saveRsvp(guestResponse);
+      } else {
+        let rsvps = [];
+        const savedRsvps = localStorage.getItem("wedding_rsvps");
+        if (savedRsvps) {
+          try {
+            rsvps = JSON.parse(savedRsvps);
+          } catch (err) {
+            rsvps = [];
+          }
+        }
+
+        rsvps.push(guestResponse);
+        localStorage.setItem("wedding_rsvps", JSON.stringify(rsvps));
       }
+    } catch (error) {
+      console.error("RSVP submission failed:", error);
+      showRsvpAlert(rsvpErrorAlert);
+      return;
     }
-    
-    rsvps.push(guestResponse);
-    localStorage.setItem("wedding_rsvps", JSON.stringify(rsvps));
     
     // Successful actions feedback
     showRsvpAlert(rsvpSuccessAlert);

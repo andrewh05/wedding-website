@@ -93,8 +93,8 @@ function normalizeConfig(nextConfig) {
 }
 
 // --- BOOTSTRAP INITIALIZATION ---
-document.addEventListener("DOMContentLoaded", () => {
-  initData();
+document.addEventListener("DOMContentLoaded", async () => {
+  await initData();
   setupNavigation();
   renderOverview();
   renderRsvpTable();
@@ -103,7 +103,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // --- DATA INITIALIZER ---
-function initData() {
+async function initData() {
   // Load configuration
   const params = new URLSearchParams(window.location.search);
   if (params.has("resetConfig")) {
@@ -129,18 +129,43 @@ function initData() {
     saveConfig(false);
   }
 
-  // Load RSVPs
-  const savedRsvps = localStorage.getItem("wedding_rsvps");
-  if (savedRsvps) {
+  if (window.WeddingSupabase?.isEnabled()) {
     try {
-      rsvps = JSON.parse(savedRsvps);
-    } catch (e) {
-      rsvps = [];
+      const [remoteConfig, remoteRegistry, remoteRsvps] = await Promise.all([
+        window.WeddingSupabase.getSiteConfig(),
+        window.WeddingSupabase.listRegistryItems(),
+        window.WeddingSupabase.listRsvps()
+      ]);
+
+      if (remoteConfig) {
+        config = normalizeConfig(remoteConfig);
+        saveConfig(false);
+      } else {
+        await window.WeddingSupabase.saveSiteConfig(config);
+      }
+
+      if (remoteRegistry && remoteRegistry.length > 0) {
+        config.registry = remoteRegistry;
+      }
+
+      rsvps = remoteRsvps || [];
+      return;
+    } catch (error) {
+      console.error("Supabase dashboard load failed:", error);
     }
-  } else {
-    // If first load, feed custom high-fidelity simulated RSVPs so dashboard comes alive!
+  }
+
+  const savedRsvps = localStorage.getItem("wedding_rsvps");
+  if (!savedRsvps) {
     rsvps = [...MOCK_RSVPS];
     localStorage.setItem("wedding_rsvps", JSON.stringify(rsvps));
+    return;
+  }
+
+  try {
+    rsvps = JSON.parse(savedRsvps);
+  } catch (e) {
+    rsvps = [];
   }
 }
 
@@ -403,11 +428,22 @@ function renderRegistryCrud() {
   });
 }
 
-window.deleteRegistryItem = function(index) {
+window.deleteRegistryItem = async function(index) {
   if (confirm("Are you sure you want to remove this registry link?")) {
-    config.registry.splice(index, 1);
-    saveConfig();
-    renderRegistryCrud();
+    const item = config.registry[index];
+
+    try {
+      if (window.WeddingSupabase?.isEnabled() && item.id) {
+        await window.WeddingSupabase.deleteRegistryItem(item.id);
+      }
+
+      config.registry.splice(index, 1);
+      saveConfig();
+      renderRegistryCrud();
+    } catch (error) {
+      console.error("Registry delete failed:", error);
+      alert("Could not delete registry item. Please try again.");
+    }
   }
 };
 
@@ -425,7 +461,7 @@ window.editRegistryItem = function(index) {
 
 const adminRegistryForm = document.getElementById("adminRegistryForm");
 if (adminRegistryForm) {
-  adminRegistryForm.addEventListener("submit", (e) => {
+  adminRegistryForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const indexStr = document.getElementById("registryEditIndex").value;
     const site = document.getElementById("registrySite").value.trim();
@@ -433,28 +469,51 @@ if (adminRegistryForm) {
     const desc = document.getElementById("registryDesc").value.trim();
     const link = document.getElementById("registryLink").value.trim();
 
-    const newItem = { site, title, desc, link };
+    const existingItem = indexStr !== "" ? config.registry[parseInt(indexStr)] : null;
+    const newItem = { ...existingItem, site, title, desc, link };
 
-    if (indexStr !== "") {
-      config.registry[parseInt(indexStr)] = newItem;
-    } else {
-      if (!config.registry) config.registry = [];
-      config.registry.push(newItem);
+    try {
+      if (window.WeddingSupabase?.isEnabled()) {
+        const savedItem = await window.WeddingSupabase.saveRegistryItem(
+          newItem,
+          indexStr !== "" ? parseInt(indexStr) : config.registry.length
+        );
+        Object.assign(newItem, savedItem);
+      }
+
+      if (indexStr !== "") {
+        config.registry[parseInt(indexStr)] = newItem;
+      } else {
+        if (!config.registry) config.registry = [];
+        config.registry.push(newItem);
+      }
+
+      saveConfig();
+      renderRegistryCrud();
+      document.getElementById("registryModal").classList.remove("active");
+    } catch (error) {
+      console.error("Registry save failed:", error);
+      alert("Could not save registry item. Please try again.");
     }
-
-    saveConfig();
-    renderRegistryCrud();
-    document.getElementById("registryModal").classList.remove("active");
   });
 }
 
 // --- RSVP TABLE MANUAL INJECTORS / CRUD ACTIONS ---
-window.deleteRsvpManual = function(id) {
+window.deleteRsvpManual = async function(id) {
   if (confirm("Are you sure you want to permanently delete this RSVP guest record?")) {
-    rsvps = rsvps.filter(r => r.id !== id);
-    localStorage.setItem("wedding_rsvps", JSON.stringify(rsvps));
-    renderOverview();
-    renderRsvpTable(document.getElementById("rsvpSearch").value);
+    try {
+      if (window.WeddingSupabase?.isEnabled()) {
+        await window.WeddingSupabase.deleteRsvp(id);
+      }
+
+      rsvps = rsvps.filter(r => r.id !== id);
+      localStorage.setItem("wedding_rsvps", JSON.stringify(rsvps));
+      renderOverview();
+      renderRsvpTable(document.getElementById("rsvpSearch").value);
+    } catch (error) {
+      console.error("RSVP delete failed:", error);
+      alert("Could not delete RSVP. Please try again.");
+    }
   }
 };
 
@@ -501,7 +560,7 @@ manualAttendanceRadios.forEach(radio => {
 
 const adminRsvpForm = document.getElementById("adminRsvpForm");
 if (adminRsvpForm) {
-  adminRsvpForm.addEventListener("submit", (e) => {
+  adminRsvpForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const id = document.getElementById("rsvpEditId").value;
@@ -511,7 +570,7 @@ if (adminRsvpForm) {
     const attendance = document.querySelector("input[name='manualAttendance']:checked").value;
 
     let updatedGuest = {
-      id: id || Date.now().toString(),
+      id: id || (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString()),
       firstName,
       lastName,
       email,
@@ -533,19 +592,26 @@ if (adminRsvpForm) {
       updatedGuest.song = "-";
     }
 
-    if (id) {
-      // Edit mode
-      const index = rsvps.findIndex(r => r.id === id);
-      if (index !== -1) rsvps[index] = updatedGuest;
-    } else {
-      // Add mode
-      rsvps.push(updatedGuest);
-    }
+    try {
+      if (window.WeddingSupabase?.isEnabled()) {
+        updatedGuest = await window.WeddingSupabase.saveRsvp(updatedGuest);
+      }
 
-    localStorage.setItem("wedding_rsvps", JSON.stringify(rsvps));
-    renderOverview();
-    renderRsvpTable(document.getElementById("rsvpSearch").value);
-    document.getElementById("rsvpModal").classList.remove("active");
+      if (id) {
+        const index = rsvps.findIndex(r => r.id === id);
+        if (index !== -1) rsvps[index] = updatedGuest;
+      } else {
+        rsvps.push(updatedGuest);
+      }
+
+      localStorage.setItem("wedding_rsvps", JSON.stringify(rsvps));
+      renderOverview();
+      renderRsvpTable(document.getElementById("rsvpSearch").value);
+      document.getElementById("rsvpModal").classList.remove("active");
+    } catch (error) {
+      console.error("RSVP save failed:", error);
+      alert("Could not save RSVP. Please try again.");
+    }
   });
 }
 
@@ -621,8 +687,8 @@ window.addEventListener("storage", (e) => {
     renderRsvpTable(document.getElementById("rsvpSearch")?.value || "");
   }
 });
-window.addEventListener("rsvp-submitted", () => {
-  initData();
+window.addEventListener("rsvp-submitted", async () => {
+  await initData();
   renderOverview();
   renderRsvpTable(document.getElementById("rsvpSearch")?.value || "");
 });
