@@ -13,7 +13,7 @@ const DEFAULT_CONFIG = {
   heroImage: "./assets/hero_bg.jpeg",
   musicUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
   musicName: "Preset Romance Instrumental",
-  theme: "emerald", // 'emerald', 'rosegold', 'bohemian', 'classicdark'
+  theme: "navy",
   bride: {
     name: "Sarah Jenkins",
     bio: "Sarah is a designer who loves watercolor, botanical gardens, and morning espresso. She cannot wait to marry her best friend and celebrate under the Sonoma redwoods.",
@@ -85,22 +85,23 @@ function normalizeConfig(config) {
 
   nextConfig._defaultConfigSignature = DEFAULT_CONFIG_SIGNATURE;
   nextConfig._customized = Boolean(config._customized);
+  nextConfig.theme = "navy";
 
   return nextConfig;
 }
 
 // --- PRESET THEMES SPECIFICATIONS ---
 const THEME_PRESETS = {
-  emerald: {
-    primary: "#0b3c2e",
-    secondary: "#1a5c49",
-    accent: "#d4af37",
-    accentHover: "#c49e27",
-    bg: "#fdfbf7",
+  navy: {
+    primary: "#13233a",
+    secondary: "#2f3f56",
+    accent: "#8f9bab",
+    accentHover: "#748296",
+    bg: "#f3f5f8",
     cardBg: "rgba(255, 255, 255, 0.75)",
-    text: "#2c3531",
-    textLight: "#606f6b",
-    border: "rgba(11, 60, 46, 0.15)",
+    text: "#182333",
+    textLight: "#647082",
+    border: "rgba(19, 35, 58, 0.16)",
     shadow: "rgba(0, 0, 0, 0.08)",
     fontHeading: "'Playfair Display', serif"
   },
@@ -133,8 +134,8 @@ const THEME_PRESETS = {
   classicdark: {
     primary: "#ffffff",
     secondary: "#e0e0e0",
-    accent: "#d4af37",
-    accentHover: "#bfa030",
+    accent: "#8f9bab",
+    accentHover: "#748296",
     bg: "#121212",
     cardBg: "rgba(30, 30, 30, 0.75)",
     text: "#e0e0e0",
@@ -199,13 +200,13 @@ async function loadConfiguration() {
     }
   }
   
-  applyTheme(currentConfig.theme || "emerald");
+  applyTheme(currentConfig.theme || "navy");
   applyContent(currentConfig);
 }
 
 // --- APPLY CUSTOM PROPERTY THEMES ---
 function applyTheme(themeName) {
-  const preset = THEME_PRESETS[themeName] || THEME_PRESETS.emerald;
+  const preset = THEME_PRESETS[themeName] || THEME_PRESETS.navy;
   const root = document.documentElement;
   
   root.style.setProperty("--theme-primary", preset.primary);
@@ -224,7 +225,7 @@ function applyTheme(themeName) {
   if (themeName === "classicdark") {
     document.body.style.backgroundColor = "#121212";
     const coupleCardHeader = document.querySelector(".couple-divider");
-    if(coupleCardHeader) coupleCardHeader.style.color = "#d4af37";
+    if(coupleCardHeader) coupleCardHeader.style.color = "#8f9bab";
   } else {
     document.body.style.backgroundColor = preset.bg;
   }

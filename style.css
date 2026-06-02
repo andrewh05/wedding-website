@@ -5,17 +5,17 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Alex+Brush&family=Inter:wght@300;400;500;600&family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Outfit:wght@300;400;500;600;700&display=swap');
 
-/* Default Theme - Emerald & Gold (Classic Luxury) */
+/* Default Theme - Navy & Grey */
 :root {
-  --theme-primary: #0b3c2e;
-  --theme-secondary: #1a5c49;
-  --theme-accent: #d4af37;
-  --theme-accent-hover: #c49e27;
-  --theme-bg: #fdfbf7;
+  --theme-primary: #13233a;
+  --theme-secondary: #2f3f56;
+  --theme-accent: #8f9bab;
+  --theme-accent-hover: #748296;
+  --theme-bg: #f3f5f8;
   --theme-card-bg: rgba(255, 255, 255, 0.75);
-  --theme-text: #2c3531;
-  --theme-text-light: #606f6b;
-  --theme-border: rgba(11, 60, 46, 0.15);
+  --theme-text: #182333;
+  --theme-text-light: #647082;
+  --theme-border: rgba(19, 35, 58, 0.16);
   --theme-shadow: rgba(0, 0, 0, 0.08);
   
   --font-heading: 'Playfair Display', serif;
@@ -951,7 +951,7 @@ footer {
 /* Sidebar Navigation */
 .admin-sidebar {
   width: 280px;
-  background-color: #0b3c2e;
+  background-color: #13233a;
   color: #fff;
   display: flex;
   flex-direction: column;
@@ -1020,8 +1020,8 @@ footer {
 }
 
 .sidebar-item-btn.active {
-  background-color: #d4af37;
-  color: #0b3c2e;
+  background-color: #8f9bab;
+  color: #13233a;
   font-weight: 600;
 }
 
@@ -1052,7 +1052,7 @@ footer {
 .admin-title {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #1a5c49;
+  color: #2f3f56;
 }
 
 .admin-view-site {
@@ -1060,7 +1060,7 @@ footer {
   align-items: center;
   gap: 0.5rem;
   background-color: #f0f4f2;
-  color: #0b3c2e;
+  color: #13233a;
   padding: 0.5rem 1.25rem;
   border-radius: 20px;
   font-size: 0.85rem;
@@ -1116,7 +1116,7 @@ footer {
 .stat-value {
   font-size: 2.25rem;
   font-weight: 700;
-  color: #0b3c2e;
+  color: #13233a;
   font-family: var(--font-heading);
 }
 
@@ -1146,7 +1146,7 @@ footer {
   font-size: 1.15rem;
   margin-bottom: 1.5rem;
   font-weight: 600;
-  color: #0b3c2e;
+  color: #13233a;
 }
 
 /* Visual list / mock charts */
@@ -1247,17 +1247,17 @@ footer {
 }
 
 .admin-btn-primary {
-  background-color: #0b3c2e;
+  background-color: #13233a;
   color: #fff;
 }
 
 .admin-btn-primary:hover {
-  background-color: #1a5c49;
+  background-color: #2f3f56;
 }
 
 .admin-btn-accent {
-  background-color: #d4af37;
-  color: #0b3c2e;
+  background-color: #8f9bab;
+  color: #13233a;
 }
 
 .admin-btn-accent:hover {
@@ -1371,7 +1371,7 @@ footer {
   justify-content: space-between;
   align-items: center;
   font-weight: 600;
-  color: #0b3c2e;
+  color: #13233a;
   cursor: pointer;
   background-color: #fff;
   border-bottom: 1px solid #f9f9f9;
@@ -1406,7 +1406,7 @@ footer {
 }
 
 .theme-card.active {
-  border-color: #0b3c2e;
+  border-color: #13233a;
   background-color: rgba(11, 60, 46, 0.02);
 }
 
@@ -1528,7 +1528,7 @@ footer {
 .modal-title {
   font-size: 1.4rem;
   font-weight: 600;
-  color: #0b3c2e;
+  color: #13233a;
   margin-bottom: 1.5rem;
 }
 
@@ -1564,7 +1564,7 @@ footer {
 .crud-title {
   font-weight: 600;
   font-size: 0.95rem;
-  color: #0b3c2e;
+  color: #13233a;
 }
 
 .crud-sub {

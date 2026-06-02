@@ -26,7 +26,7 @@ const DEFAULT_CONFIG = {
   heroImage: "./assets/hero_bg.jpeg",
   musicUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
   musicName: "Preset Romance Instrumental",
-  theme: "emerald",
+  theme: "navy",
   bride: {
     name: "Sarah Jenkins",
     bio: "Sarah is a designer who loves watercolor, botanical gardens, and morning espresso. She cannot wait to marry her best friend and celebrate under the Sonoma redwoods.",
@@ -96,6 +96,7 @@ function normalizeConfig(nextConfig) {
 
   normalizedConfig._defaultConfigSignature = DEFAULT_CONFIG_SIGNATURE;
   normalizedConfig._customized = Boolean(nextConfig._customized);
+  normalizedConfig.theme = "navy";
 
   return normalizedConfig;
 }
@@ -344,7 +345,7 @@ function renderRsvpTable(query = "") {
     const badgeClass = r.attendance === "Attending" ? "badge-attending" : "badge-not-attending";
     
     tr.innerHTML = `
-      <td style="font-weight:600; color:#0b3c2e;">${r.firstName} ${r.lastName}</td>
+      <td style="font-weight:600; color:#13233a;">${r.firstName} ${r.lastName}</td>
       <td>${r.email}</td>
       <td><span class="badge ${badgeClass}">${r.attendance}</span></td>
       <td>${r.meal || "-"}</td>
