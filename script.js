@@ -374,7 +374,7 @@ function startCountdown(targetDateString) {
 }
 
 // --- SWIPE SLIDER LOGIC ---
-const slides = ["hero", "couple", "timeline", "gallery", "registry", "rsvp"];
+const slides = ["hero", "couple", "timeline", "registry", "rsvp"];
 let currentSlideIndex = 0;
 
 function goToSlide(index) {
@@ -537,57 +537,6 @@ if (navToggle && navMenu) {
       navMenu.style.backgroundColor = "var(--theme-bg)";
       navMenu.style.padding = "2rem";
       navMenu.style.boxShadow = "0 10px 20px rgba(0,0,0,0.05)";
-    }
-  });
-}
-
-// --- GALLERY ISOTOPE FILTER ---
-const filterButtons = document.querySelectorAll(".filter-btn");
-const galleryItems = document.querySelectorAll(".gallery-item");
-
-filterButtons.forEach((btn) => {
-  btn.addEventListener("click", () => {
-    filterButtons.forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
-    
-    const filterValue = btn.getAttribute("data-filter");
-    
-    galleryItems.forEach((item) => {
-      if (filterValue === "all" || item.getAttribute("data-category") === filterValue) {
-        item.style.display = "block";
-        item.style.animation = "fadeIn 0.5s ease forwards";
-      } else {
-        item.style.display = "none";
-      }
-    });
-  });
-});
-
-// --- PHOTO GALLERY ZOOM LIGHTBOX MODAL ---
-const galleryModal = document.getElementById("galleryModal");
-const galleryModalImg = document.getElementById("galleryModalImg");
-const closeGalleryModal = document.getElementById("closeGalleryModal");
-
-galleryItems.forEach((item) => {
-  item.addEventListener("click", () => {
-    const imgSrc = item.querySelector(".gallery-img").src;
-    if (galleryModal && galleryModalImg) {
-      galleryModalImg.src = imgSrc;
-      galleryModal.classList.add("active");
-    }
-  });
-});
-
-if (closeGalleryModal) {
-  closeGalleryModal.addEventListener("click", () => {
-    galleryModal.classList.remove("active");
-  });
-}
-
-if (galleryModal) {
-  galleryModal.addEventListener("click", (e) => {
-    if (e.target === galleryModal) {
-      galleryModal.classList.remove("active");
     }
   });
 }
