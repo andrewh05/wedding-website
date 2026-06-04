@@ -1,4 +1,2 @@
 [functions]
   directory = "netlify/functions"
-Value:
-postgresql://postgres.setzkulmkjjdjqtriwec:bBKGPOiXSvMsmgno@aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres

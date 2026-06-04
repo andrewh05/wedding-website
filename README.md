@@ -1,5 +1,22 @@
 # wedding-website
 
+## Run with Node
+
+1. Install dependencies:
+
+```sh
+npm install
+```
+
+2. Create a `DATABASE_URL` environment variable with your Supabase Postgres connection string.
+3. Start the site:
+
+```sh
+npm start
+```
+
+The website will run at `http://localhost:3000`.
+
 ## Supabase setup
 
 1. Open your Supabase project and go to **SQL Editor**.

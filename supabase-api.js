@@ -8,7 +8,7 @@
   const client = hasSupabaseConfig && window.supabase
     ? window.supabase.createClient(config.url, config.anonKey)
     : null;
-  const serverApiBase = config.serverApiBase || "/.netlify/functions/db";
+  const serverApiBase = config.serverApiBase || "/api/db";
 
   function isEnabled() {
     return Boolean(client || serverApiBase);
