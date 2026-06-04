@@ -29,6 +29,18 @@ const DEFAULT_CONFIG = {
   },
   timeline: [
     {
+      time: "",
+      title: "Groom's Home",
+      desc: "Gathering at the groom's family home.",
+      link: "https://maps.app.goo.gl/MMX6W7CVm2zL96aN9?g_st=ac"
+    },
+    {
+      time: "",
+      title: "Bride's Home",
+      desc: "Gathering at the bride's family home.",
+      link: "https://maps.app.goo.gl/xzUdKhTZ5mWpEKicA?g_st=aw"
+    },
+    {
       time: "07:00 PM",
       title: "Church Ceremony",
       desc: "Join us for the wedding ceremony.",

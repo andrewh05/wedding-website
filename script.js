@@ -26,6 +26,18 @@ const DEFAULT_CONFIG = {
   },
   timeline: [
     {
+      time: "",
+      title: "Groom's Home",
+      desc: "Gathering at the groom's family home.",
+      link: "https://maps.app.goo.gl/MMX6W7CVm2zL96aN9?g_st=ac"
+    },
+    {
+      time: "",
+      title: "Bride's Home",
+      desc: "Gathering at the bride's family home.",
+      link: "https://maps.app.goo.gl/xzUdKhTZ5mWpEKicA?g_st=aw"
+    },
+    {
       time: "07:00 PM",
       title: "Church Ceremony",
       desc: "Join us for the wedding ceremony.",
@@ -296,7 +308,7 @@ function applyContent(config) {
       timelineItem.innerHTML = `
         <div class="timeline-dot"></div>
         <div class="timeline-card glass-panel">
-          <span class="timeline-time">${item.time}</span>
+          ${item.time ? `<span class="timeline-time">${item.time}</span>` : ""}
           <h3 class="timeline-title">${item.title}</h3>
           <p class="timeline-desc">${item.desc}</p>
           ${item.link ? `<a href="${item.link}" target="_blank" rel="noopener" class="btn btn-text timeline-link"><i class="fa-solid fa-location-dot"></i> Open map</a>` : ""}
