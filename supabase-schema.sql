@@ -10,13 +10,20 @@ create table if not exists public.rsvps (
   last_name text not null,
   guest_count integer not null default 1,
   email text not null,
-  attendance text not null check (attendance in ('Attending', 'Not Attending')),
+  attendance text not null check (attendance in ('Pending', 'Attending', 'Not Attending')),
   submitted_at timestamptz not null default now(),
   created_at timestamptz not null default now()
 );
 
 alter table public.rsvps
   add column if not exists guest_count integer not null default 1;
+
+alter table public.rsvps
+  drop constraint if exists rsvps_attendance_check;
+
+alter table public.rsvps
+  add constraint rsvps_attendance_check
+  check (attendance in ('Pending', 'Attending', 'Not Attending'));
 
 create table if not exists public.registry_items (
   id uuid primary key default gen_random_uuid(),

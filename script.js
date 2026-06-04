@@ -159,6 +159,7 @@ const THEME_PRESETS = {
 };
 
 let currentConfig = cloneDefaultConfig();
+let activeRsvpInvite = null;
 
 function saveLocalConfig(nextConfig) {
   localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(nextConfig));
@@ -214,6 +215,44 @@ async function loadConfiguration() {
   
   applyTheme(currentConfig.theme || "navy");
   applyContent(currentConfig);
+  await loadRsvpInvite();
+}
+
+async function loadRsvpInvite() {
+  const inviteId = new URLSearchParams(window.location.search).get("rsvp");
+  if (!inviteId || !window.WeddingSupabase?.isEnabled()) return;
+
+  try {
+    const invite = await window.WeddingSupabase.getRsvp(inviteId);
+    if (!invite) return;
+
+    activeRsvpInvite = invite;
+    const firstNameInput = document.getElementById("guestFirstName");
+    const lastNameInput = document.getElementById("guestLastName");
+
+    if (firstNameInput) {
+      firstNameInput.value = invite.firstName || "";
+      firstNameInput.readOnly = true;
+    }
+    if (lastNameInput) {
+      lastNameInput.value = invite.lastName || "";
+      lastNameInput.readOnly = true;
+    }
+
+    const isRejected = invite.attendance === "Not Attending";
+    const acceptedRadio = document.querySelector("input[name='attendance'][value='accepted']");
+    const rejectedRadio = document.querySelector("input[name='attendance'][value='rejected']");
+    if (acceptedRadio) acceptedRadio.checked = !isRejected;
+    if (rejectedRadio) rejectedRadio.checked = isRejected;
+    if (guestCountInput) {
+      guestCountInput.disabled = isRejected;
+      guestCountInput.value = isRejected ? "0" : String(invite.guestCount || 1);
+    }
+
+    goToSlide(slides.indexOf("rsvp"));
+  } catch (error) {
+    console.error("RSVP invitation load failed:", error);
+  }
 }
 
 // --- APPLY CUSTOM PROPERTY THEMES ---
@@ -377,7 +416,7 @@ function goToSlide(index) {
   const targetHash = `#${slides[index]}`;
 
   if (window.location.hash !== targetHash) {
-    history.replaceState(null, "", targetHash);
+    history.replaceState(null, "", `${window.location.pathname}${window.location.search}${targetHash}`);
   }
   
   // Transition the slider wrapper horizontally
@@ -576,7 +615,7 @@ if (rsvpForm) {
     }
     
     let guestResponse = {
-      id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
+      id: activeRsvpInvite?.id || (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString()),
       firstName,
       lastName,
       guestCount: isAccepted ? guestCount : 0,

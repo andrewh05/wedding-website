@@ -274,7 +274,7 @@ function renderOverview() {
       card.style.borderLeft = "4px solid #8f9bab";
       card.innerHTML = `
         <strong>${r.firstName} ${r.lastName}</strong>
-        <span style="color:#647082;">&bull; ${r.attendance === "Attending" ? "Accepted" : "Rejected"}</span>
+        <span style="color:#647082;">&bull; ${formatRsvpStatus(r.attendance)}</span>
         <span style="color:#647082;">&bull; ${r.guestCount || 0} guest${(r.guestCount || 0) === 1 ? "" : "s"}</span>
       `;
       overviewList.appendChild(card);
@@ -309,15 +309,18 @@ function renderRsvpTable(query = "") {
 
   filtered.forEach(r => {
     const tr = document.createElement("tr");
-    const isAccepted = r.attendance === "Attending";
-    const badgeClass = isAccepted ? "badge-attending" : "badge-not-attending";
+    const status = formatRsvpStatus(r.attendance);
+    const badgeClass = getRsvpBadgeClass(r.attendance);
     tr.innerHTML = `
       <td style="font-weight:600; color:#13233a;">${r.firstName} ${r.lastName}</td>
-      <td><span class="badge ${badgeClass}">${isAccepted ? "Accepted" : "Rejected"}</span></td>
+      <td><span class="badge ${badgeClass}">${status}</span></td>
       <td>${r.guestCount || 0}</td>
       <td>${r.timestamp ? new Date(r.timestamp).toLocaleDateString() : "-"}</td>
       <td>
         <div class="table-ops">
+          <button class="op-btn op-btn-edit" onclick="copyRsvpInviteLink('${r.id}')" title="Copy RSVP link">
+            <i class="fa-solid fa-link"></i>
+          </button>
           <button class="op-btn op-btn-edit" onclick="editRsvpManual('${r.id}')" title="Edit RSVP">
             <i class="fa-solid fa-pen-to-square"></i>
           </button>
@@ -330,6 +333,35 @@ function renderRsvpTable(query = "") {
     rsvpTableBody.appendChild(tr);
   });
 }
+
+function formatRsvpStatus(attendance) {
+  if (attendance === "Attending") return "Accepted";
+  if (attendance === "Not Attending") return "Rejected";
+  return "Pending";
+}
+
+function getRsvpBadgeClass(attendance) {
+  if (attendance === "Attending") return "badge-attending";
+  if (attendance === "Not Attending") return "badge-not-attending";
+  return "badge-pending";
+}
+
+function buildRsvpInviteLink(id) {
+  const baseUrl = new URL("index.html", window.location.href);
+  baseUrl.searchParams.set("rsvp", id);
+  baseUrl.hash = "rsvp";
+  return baseUrl.toString();
+}
+
+window.copyRsvpInviteLink = async function(id) {
+  const link = buildRsvpInviteLink(id);
+  try {
+    await navigator.clipboard.writeText(link);
+    alert("RSVP link copied.");
+  } catch (error) {
+    window.prompt("Copy this RSVP link:", link);
+  }
+};
 
 // Dynamic Search binder
 if (rsvpSearch) {
@@ -351,7 +383,7 @@ if (exportCsvBtn) {
     const rows = rsvps.map(r => [
       r.firstName,
       r.lastName,
-      r.attendance === "Attending" ? "Accepted" : "Rejected",
+      formatRsvpStatus(r.attendance),
       r.guestCount || 0,
       r.timestamp || ""
     ]);
@@ -490,7 +522,9 @@ window.editRsvpManual = function(id) {
   document.getElementById("manualFirstName").value = guest.firstName;
   document.getElementById("manualLastName").value = guest.lastName;
   const isAccepted = guest.attendance === "Attending";
-  document.getElementById(isAccepted ? "manualAcceptedRadio" : "manualRejectedRadio").checked = true;
+  const isRejected = guest.attendance === "Not Attending";
+  const radioId = isAccepted ? "manualAcceptedRadio" : isRejected ? "manualRejectedRadio" : "manualPendingRadio";
+  document.getElementById(radioId).checked = true;
   document.getElementById("manualGuestCount").disabled = !isAccepted;
   document.getElementById("manualGuestCount").value = isAccepted ? (guest.guestCount || 1) : 0;
 
@@ -502,10 +536,10 @@ const manualAttendanceRadios = document.querySelectorAll("input[name='manualAtte
 const manualGuestCountInput = document.getElementById("manualGuestCount");
 manualAttendanceRadios.forEach((radio) => {
   radio.addEventListener("change", () => {
-    const isRejected = document.querySelector("input[name='manualAttendance']:checked")?.value === "Not Attending";
+    const isAccepted = document.querySelector("input[name='manualAttendance']:checked")?.value === "Attending";
     if (manualGuestCountInput) {
-      manualGuestCountInput.disabled = isRejected;
-      manualGuestCountInput.value = isRejected ? "0" : "1";
+      manualGuestCountInput.disabled = !isAccepted;
+      manualGuestCountInput.value = isAccepted ? "1" : "0";
     }
   });
 });
@@ -519,7 +553,7 @@ if (adminRsvpForm) {
     const firstName = document.getElementById("manualFirstName").value.trim();
     const lastName = document.getElementById("manualLastName").value.trim();
     const guestCount = parseInt(document.getElementById("manualGuestCount").value, 10);
-    const attendance = document.querySelector("input[name='manualAttendance']:checked")?.value || "Attending";
+    const attendance = document.querySelector("input[name='manualAttendance']:checked")?.value || "Pending";
     const isAccepted = attendance === "Attending";
 
     let updatedGuest = {
@@ -540,11 +574,14 @@ if (adminRsvpForm) {
         throw new Error("Supabase is not configured for RSVP saves.");
       }
 
-      await window.WeddingSupabase.saveRsvp(updatedGuest);
+      const savedGuest = await window.WeddingSupabase.saveRsvp(updatedGuest);
       rsvps = await window.WeddingSupabase.listRsvps() || [];
       renderOverview();
       renderRsvpTable(document.getElementById("rsvpSearch").value);
       document.getElementById("rsvpModal").classList.remove("active");
+      if (!id) {
+        window.prompt("Send this RSVP link to the guest:", buildRsvpInviteLink(savedGuest.id));
+      }
     } catch (error) {
       console.error("RSVP save failed:", error);
       alert("Could not save RSVP. Please try again.");
@@ -576,9 +613,9 @@ function setupModals() {
         }
         
         if (m.modal === "rsvpModal") {
-          document.getElementById("manualAcceptedRadio").checked = true;
-          document.getElementById("manualGuestCount").value = "1";
-          document.getElementById("manualGuestCount").disabled = false;
+          document.getElementById("manualPendingRadio").checked = true;
+          document.getElementById("manualGuestCount").value = "0";
+          document.getElementById("manualGuestCount").disabled = true;
         }
         
         // Reset title

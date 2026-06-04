@@ -18,7 +18,7 @@
       id: rsvp.id || crypto.randomUUID(),
       first_name: rsvp.firstName,
       last_name: rsvp.lastName,
-      guest_count: rsvp.guestCount || 1,
+      guest_count: Number.isInteger(Number(rsvp.guestCount)) ? Number(rsvp.guestCount) : 1,
       email: rsvp.email,
       attendance: rsvp.attendance,
       meal: rsvp.meal || "-",
@@ -33,7 +33,7 @@
       id: row.id,
       firstName: row.first_name,
       lastName: row.last_name,
-      guestCount: row.guest_count || 1,
+      guestCount: Number.isInteger(Number(row.guest_count)) ? Number(row.guest_count) : 1,
       email: row.email,
       attendance: row.attendance,
       meal: row.meal,
@@ -101,6 +101,19 @@
 
     if (error) throw error;
     return data.map(fromRsvpRow);
+  }
+
+  async function getRsvp(id) {
+    if (!client || !id) return null;
+
+    const { data, error } = await client
+      .from("rsvps")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data ? fromRsvpRow(data) : null;
   }
 
   async function saveRsvp(rsvp) {
@@ -175,6 +188,7 @@
     getSiteConfig,
     saveSiteConfig,
     listRsvps,
+    getRsvp,
     saveRsvp,
     deleteRsvp,
     listRegistryItems,

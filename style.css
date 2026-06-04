@@ -1299,6 +1299,11 @@ footer {
   color: #e74c3c;
 }
 
+.badge-pending {
+  background-color: #fff4d6;
+  color: #b7791f;
+}
+
 .table-ops {
   display: flex;
   gap: 0.5rem;
