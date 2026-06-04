@@ -56,7 +56,7 @@ exports.handler = async function handler(event) {
   }
 
   if (!process.env.DATABASE_URL) {
-    return json(500, { error: "DATABASE_URL is not configured in Netlify." });
+    return json(500, { error: "DATABASE_URL is not configured." });
   }
 
   const action = event.queryStringParameters?.action;

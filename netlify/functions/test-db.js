@@ -4,7 +4,7 @@ exports.handler = async function handler() {
   if (!process.env.DATABASE_URL) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "DATABASE_URL is not configured in Netlify." })
+      body: JSON.stringify({ error: "DATABASE_URL is not configured." })
     };
   }
 
