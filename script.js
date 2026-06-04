@@ -306,24 +306,6 @@ function applyContent(config) {
     });
   }
 
-  // Dynamic Registry Builder
-  const registryContainer = document.getElementById("registryGrid");
-  if (registryContainer && config.registry) {
-    registryContainer.innerHTML = "";
-    config.registry.forEach((item) => {
-      const registryCard = document.createElement("div");
-      registryCard.className = "registry-card glass-panel";
-      
-      registryCard.innerHTML = `
-        <div class="registry-logo">${item.site}</div>
-        <h3 class="registry-title">${item.title}</h3>
-        <p class="registry-desc">${item.desc}</p>
-        <a href="${item.link}" target="_blank" class="btn btn-secondary">Explore Registry</a>
-      `;
-      registryContainer.appendChild(registryCard);
-    });
-  }
-
   // Restart Countdown Engine with new target
   startCountdown(config.date);
 }
@@ -380,6 +362,11 @@ let currentSlideIndex = 0;
 function goToSlide(index) {
   if (index < 0 || index >= slides.length) return;
   currentSlideIndex = index;
+  const targetHash = `#${slides[index]}`;
+
+  if (window.location.hash !== targetHash) {
+    history.replaceState(null, "", targetHash);
+  }
   
   // Transition the slider wrapper horizontally
   const wrapper = document.getElementById("swipeWrapper");
@@ -413,6 +400,8 @@ function goToSlide(index) {
   if (prevBtn) prevBtn.style.display = index === 0 ? "none" : "flex";
   if (nextBtn) nextBtn.style.display = index === slides.length - 1 ? "none" : "flex";
 
+  document.body.classList.toggle("registry-active", slides[index] === "registry");
+
   // Seamlessly add scrolled styling to navbar if not on Home hero screen
   const header = document.getElementById("navHeader");
   if (header) {
@@ -445,7 +434,8 @@ document.addEventListener("DOMContentLoaded", () => {
   loadConfiguration();
 
   // Initialize arrow buttons visibility
-  goToSlide(0);
+  const initialSlideIndex = Math.max(0, slides.indexOf(window.location.hash.replace("#", "")));
+  goToSlide(initialSlideIndex);
 
   // 2. Navbar click binders
   document.querySelectorAll(".nav-menu .nav-link").forEach((link) => {

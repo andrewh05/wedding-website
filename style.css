@@ -525,42 +525,71 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Registry Section */
-.registry-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 2rem;
+#registry.swipe-slide {
+  padding: 0;
+  justify-content: stretch;
+  background: #fde8fb;
 }
 
-.registry-card {
-  padding: 2.5rem;
+.registry-page {
+  width: 100%;
+  min-height: 100vh;
+  color: #fff;
+}
+
+.registry-gift-panel {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 7rem clamp(1.5rem, 7vw, 4rem) 6rem;
+  background: #bdcdb1;
   text-align: center;
-  border: 1px solid var(--theme-border);
-  transition: var(--transition-smooth);
 }
 
-.registry-card:hover {
-  transform: translateY(-5px);
-  border-color: var(--theme-accent);
-  box-shadow: 0 10px 30px rgba(212, 175, 55, 0.1);
+.registry-script-title {
+  font-family: var(--font-cursive);
+  font-size: clamp(4.5rem, 12vw, 7rem);
+  font-weight: 400;
+  color: #fff7ff;
+  line-height: 0.9;
 }
 
-.registry-logo {
+.registry-gift-icon {
+  color: #fff;
+  font-size: clamp(3rem, 7vw, 5rem);
+  line-height: 1;
+  margin: 0.25rem 0 1.25rem;
+}
+
+.registry-note,
+.registry-thanks,
+.registry-account {
+  width: min(100%, 760px);
   font-family: var(--font-heading);
-  font-size: 2rem;
-  color: var(--theme-primary);
-  margin-bottom: 1rem;
   font-style: italic;
+  color: #fff;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
-.registry-title {
-  font-size: 1.2rem;
-  margin-bottom: 1rem;
+.registry-note {
+  font-size: clamp(1.35rem, 3vw, 1.85rem);
+  line-height: 1.55;
 }
 
-.registry-desc {
-  font-size: 0.9rem;
-  color: var(--theme-text-light);
-  margin-bottom: 2rem;
+.registry-account {
+  margin: 1.4rem 0;
+  font-size: clamp(1.55rem, 3.4vw, 2.15rem);
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.registry-thanks {
+  font-size: clamp(1.25rem, 2.7vw, 1.7rem);
+  line-height: 1.45;
 }
 
 /* RSVP Section & Form */
@@ -1592,5 +1621,14 @@ footer {
   
   .preview-sticky {
     display: none; /* Hide interactive simulator on tablet/mobile size */
+  }
+
+  .registry-gift-panel {
+    gap: 0.75rem;
+    padding: 6.5rem 1.35rem 5.5rem;
+  }
+
+  .registry-account {
+    margin: 1rem 0;
   }
 }
