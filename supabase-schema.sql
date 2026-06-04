@@ -8,14 +8,15 @@ create table if not exists public.rsvps (
   id uuid primary key default gen_random_uuid(),
   first_name text not null,
   last_name text not null,
+  guest_count integer not null default 1,
   email text not null,
   attendance text not null check (attendance in ('Attending', 'Not Attending')),
-  meal text not null default '-',
-  dietary text not null default '-',
-  song text not null default '-',
   submitted_at timestamptz not null default now(),
   created_at timestamptz not null default now()
 );
+
+alter table public.rsvps
+  add column if not exists guest_count integer not null default 1;
 
 create table if not exists public.registry_items (
   id uuid primary key default gen_random_uuid(),

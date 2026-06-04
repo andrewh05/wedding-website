@@ -528,13 +528,13 @@ h1, h2, h3, h4, h5, h6 {
 #registry.swipe-slide {
   padding: 0;
   justify-content: stretch;
-  background: #fde8fb;
+  background: var(--theme-bg);
 }
 
 .registry-page {
   width: 100%;
   min-height: 100vh;
-  color: #fff;
+  color: var(--theme-primary);
 }
 
 .registry-gift-panel {
@@ -545,8 +545,10 @@ h1, h2, h3, h4, h5, h6 {
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  padding: 7rem clamp(1.5rem, 7vw, 4rem) 6rem;
-  background: #bdcdb1;
+  padding: 7rem clamp(5.5rem, 12vw, 7rem) 6rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.32)),
+    var(--theme-bg);
   text-align: center;
 }
 
@@ -554,25 +556,25 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-cursive);
   font-size: clamp(4.5rem, 12vw, 7rem);
   font-weight: 400;
-  color: #fff7ff;
+  color: var(--theme-accent);
   line-height: 0.9;
 }
 
-.registry-gift-icon {
-  color: #fff;
-  font-size: clamp(3rem, 7vw, 5rem);
-  line-height: 1;
+.registry-gift-image {
+  width: clamp(9rem, 22vw, 14rem);
+  max-height: 13rem;
+  object-fit: contain;
   margin: 0.25rem 0 1.25rem;
 }
 
 .registry-note,
 .registry-thanks,
 .registry-account {
-  width: min(100%, 760px);
+  width: min(100%, 700px);
   font-family: var(--font-heading);
   font-style: italic;
-  color: #fff;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
+  color: var(--theme-primary);
+  text-shadow: none;
 }
 
 .registry-note {
@@ -585,6 +587,7 @@ h1, h2, h3, h4, h5, h6 {
   font-size: clamp(1.55rem, 3.4vw, 2.15rem);
   font-weight: 700;
   line-height: 1.45;
+  color: var(--theme-secondary);
 }
 
 .registry-thanks {
@@ -1610,6 +1613,33 @@ footer {
     grid-template-columns: 1fr;
     gap: 0;
   }
+
+  #rsvp.swipe-slide {
+    justify-content: flex-start;
+    padding-top: 5rem;
+    padding-bottom: 7rem;
+  }
+
+  #rsvp .section-header {
+    margin-bottom: 1rem !important;
+  }
+
+  #rsvp .section-subtitle {
+    font-size: 2rem;
+  }
+
+  #rsvp .section-title {
+    font-size: 2.4rem;
+    padding-bottom: 0.8rem;
+  }
+
+  #rsvp .rsvp-container {
+    padding: 1.5rem !important;
+  }
+
+  #rsvp .form-group {
+    margin-bottom: 1rem;
+  }
   
   .analytics-row {
     grid-template-columns: 1fr;
@@ -1625,7 +1655,7 @@ footer {
 
   .registry-gift-panel {
     gap: 0.75rem;
-    padding: 6.5rem 1.35rem 5.5rem;
+    padding: 6.5rem 5rem 5.5rem;
   }
 
   .registry-account {

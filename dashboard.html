@@ -69,14 +69,14 @@
             <div class="stat-meta">Responses received</div>
           </div>
           <div class="stat-card">
-            <span class="stat-label">Guests Attending</span>
+            <span class="stat-label">Accepted</span>
             <div class="stat-value" id="statAttending" style="color: #2ecc71;">0</div>
-            <div class="stat-meta">Planning to attend</div>
+            <div class="stat-meta">RSVPs accepted</div>
           </div>
           <div class="stat-card">
-            <span class="stat-label">Guests Declined</span>
+            <span class="stat-label">Rejected</span>
             <div class="stat-value" id="statDeclined" style="color: #e74c3c;">0</div>
-            <div class="stat-meta">Regretfully declined</div>
+            <div class="stat-meta">RSVPs rejected</div>
           </div>
           <div class="stat-card">
             <span class="stat-label">Days to Big Day</span>
@@ -86,17 +86,15 @@
         </div>
         
         <div class="analytics-row">
-          <!-- Meal breakdowns (Mock CSS Bar Charts populated via js) -->
           <div class="panel-card">
-            <h3 class="panel-title">Meal Choice Preferences</h3>
+            <h3 class="panel-title">Guest Count Breakdown</h3>
             <div class="meal-list" id="mealBreakdownContainer">
               <!-- Populated dynamically via JS -->
             </div>
           </div>
           
-          <!-- Special Dietary info -->
           <div class="panel-card">
-            <h3 class="panel-title">Dietary Alerts & Song Requests</h3>
+            <h3 class="panel-title">Recent RSVPs</h3>
             <div id="quickOverviewList" style="max-height: 200px; overflow-y: auto; font-size: 0.85rem; line-height: 1.6;">
               <!-- Populated dynamically via JS -->
             </div>
@@ -111,7 +109,7 @@
             <!-- Search & Filters -->
             <div class="search-box">
               <i class="fa-solid fa-magnifying-glass search-icon"></i>
-              <input type="text" id="rsvpSearch" class="search-input" placeholder="Search guests by name or email...">
+              <input type="text" id="rsvpSearch" class="search-input" placeholder="Search guests by name...">
             </div>
             
             <!-- Quick manual entry & export buttons -->
@@ -130,11 +128,9 @@
               <thead>
                 <tr>
                   <th>Guest Name</th>
-                  <th>Email</th>
-                  <th>Attendance</th>
-                  <th>Meal Preference</th>
-                  <th>Dietary Restrictions</th>
-                  <th>Song Request</th>
+                  <th>Status</th>
+                  <th>Guests Coming</th>
+                  <th>Submitted</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -182,42 +178,22 @@
         </div>
         
         <div class="form-group">
-          <label class="form-label" for="manualEmail">Email Address</label>
-          <input type="email" id="manualEmail" class="form-input" required>
-        </div>
-        
-        <div class="form-group">
-          <label class="form-label">Will they attend?</label>
+          <label class="form-label">RSVP Status</label>
           <div class="radio-group">
             <label class="radio-label">
-              <input type="radio" name="manualAttendance" id="attendingRadio" value="Attending" checked>
-              Joyfully Accepts
+              <input type="radio" name="manualAttendance" id="manualAcceptedRadio" value="Attending" checked>
+              Accepted
             </label>
             <label class="radio-label">
-              <input type="radio" name="manualAttendance" id="decliningRadio" value="Not Attending">
-              Regretfully Declines
+              <input type="radio" name="manualAttendance" id="manualRejectedRadio" value="Not Attending">
+              Rejected
             </label>
           </div>
         </div>
-        
-        <div id="manualAttendingDetails">
-          <div class="form-group">
-            <label class="form-label" for="manualMeal">Meal Selection</label>
-            <select id="manualMeal" class="form-input">
-              <option value="Beef">Garlic Herb Grilled Ribeye</option>
-              <option value="Fish">Pan-Seared Pacific Salmon</option>
-              <option value="Vegetarian">Wild Mushroom Risotto (V)</option>
-              <option value="Vegan">Roasted Butternut Squash Steak (VG)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="manualDietary">Dietary Restrictions</label>
-            <input type="text" id="manualDietary" class="form-input" placeholder="e.g. Nut allergy (leave empty if none)">
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="manualSong">Song Request</label>
-            <input type="text" id="manualSong" class="form-input" placeholder="Song title & artist">
-          </div>
+
+        <div class="form-group">
+          <label class="form-label" for="manualGuestCount">Guests Coming</label>
+          <input type="number" id="manualGuestCount" class="form-input" min="1" max="20" value="1" required>
         </div>
         
         <div class="modal-footer">

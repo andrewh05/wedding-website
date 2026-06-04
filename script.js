@@ -531,25 +531,22 @@ if (navToggle && navMenu) {
   });
 }
 
-// --- RSVP CONDITIONAL FIELD TOGGLING ---
-const rsvpAttendanceRadios = document.querySelectorAll("input[name='attendance']");
-const attendingDetails = document.getElementById("attendingDetails");
-
-rsvpAttendanceRadios.forEach((radio) => {
-  radio.addEventListener("change", (e) => {
-    if (e.target.value === "attending") {
-      attendingDetails.style.display = "block";
-      attendingDetails.style.animation = "fadeIn 0.4s ease forwards";
-    } else {
-      attendingDetails.style.display = "none";
-    }
-  });
-});
-
 // --- RSVP LOCALSTORAGE SUBMITTER ---
 const rsvpForm = document.getElementById("rsvpForm");
 const rsvpSuccessAlert = document.getElementById("rsvpSuccessAlert");
 const rsvpErrorAlert = document.getElementById("rsvpErrorAlert");
+const guestCountInput = document.getElementById("guestCount");
+const attendanceRadios = document.querySelectorAll("input[name='attendance']");
+
+attendanceRadios.forEach((radio) => {
+  radio.addEventListener("change", () => {
+    const isRejected = document.querySelector("input[name='attendance']:checked")?.value === "rejected";
+    if (guestCountInput) {
+      guestCountInput.disabled = isRejected;
+      guestCountInput.value = isRejected ? "0" : "1";
+    }
+  });
+});
 
 if (rsvpForm) {
   rsvpForm.addEventListener("submit", async (e) => {
@@ -557,38 +554,27 @@ if (rsvpForm) {
     
     const firstName = document.getElementById("guestFirstName").value.trim();
     const lastName = document.getElementById("guestLastName").value.trim();
-    const email = document.getElementById("guestEmail").value.trim();
-    const attendance = document.querySelector("input[name='attendance']:checked").value;
+    const attendance = document.querySelector("input[name='attendance']:checked")?.value || "accepted";
+    const guestCount = parseInt(document.getElementById("guestCount").value, 10);
+    const isAccepted = attendance === "accepted";
     
-    // Simple validation validation
-    if (!firstName || !lastName || !email) {
+    if (!firstName || !lastName || (isAccepted && (!Number.isInteger(guestCount) || guestCount < 1))) {
       showRsvpAlert(rsvpErrorAlert);
       return;
     }
     
-    // Attending details data extraction
     let guestResponse = {
       id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
       firstName,
       lastName,
-      email,
-      attendance: attendance === "attending" ? "Attending" : "Not Attending",
+      guestCount: isAccepted ? guestCount : 0,
+      email: "-",
+      attendance: isAccepted ? "Attending" : "Not Attending",
+      meal: "-",
+      dietary: "-",
+      song: "-",
       timestamp: new Date().toISOString()
     };
-    
-    if (attendance === "attending") {
-      const meal = document.getElementById("mealPreference").value;
-      const dietary = document.getElementById("dietaryRestrictions").value.trim();
-      const song = document.getElementById("songRequest").value.trim();
-      
-      guestResponse.meal = meal.charAt(0).toUpperCase() + meal.slice(1);
-      guestResponse.dietary = dietary || "None";
-      guestResponse.song = song || "None";
-    } else {
-      guestResponse.meal = "-";
-      guestResponse.dietary = "-";
-      guestResponse.song = "-";
-    }
     
     try {
       if (window.WeddingSupabase?.isEnabled()) {
@@ -616,9 +602,8 @@ if (rsvpForm) {
     // Successful actions feedback
     showRsvpAlert(rsvpSuccessAlert);
     rsvpForm.reset();
-    
-    // Keep attendance field sync
-    attendingDetails.style.display = "block";
+    document.getElementById("guestCount").disabled = false;
+    document.getElementById("guestCount").value = "1";
     
     // Trigger customizer event if inside dashboard context frame
     window.dispatchEvent(new Event("rsvp-submitted"));

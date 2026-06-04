@@ -135,9 +135,7 @@
         <div class="registry-page">
           <div class="registry-gift-panel">
             <h2 class="registry-script-title">Gifts</h2>
-            <div class="registry-gift-icon" aria-hidden="true">
-              <i class="fa-solid fa-gift"></i>
-            </div>
+            <img class="registry-gift-image" src="./assets/gift-angel.jpeg" alt="Angel holding a gift">
             <p class="registry-note">
               Having you with us to celebrate is already the greatest gift we could receive.
             </p>
@@ -145,8 +143,8 @@
               If you'd like to contribute further, we've included our registry below.
             </p>
             <div class="registry-account">
-              <p>Whish Account: Andrew &amp; Melissa</p>
-              <p>Phone Number: +961 76451451</p>
+              <p>Whish Account: Elissa &amp; Elie</p>
+              <p>Phone Number:</p>
             </div>
             <p class="registry-thanks">
               Thank you for your love and for sharing in this unforgettable time!<br>
@@ -163,59 +161,36 @@
           <h2 class="section-title">Kindly RSVP</h2>
         </div>
         
-        <div class="rsvp-container glass-panel" style="width: 100%; max-width: 700px; padding: 2rem; max-height: 70vh; overflow-y: auto;">
+        <div class="rsvp-container glass-panel" style="width: 100%; max-width: 700px; padding: 2rem;">
           <form id="rsvpForm" novalidate>
             <div class="form-group-row">
               <div class="form-group">
                 <label for="guestFirstName" class="form-label">First Name</label>
-                <input type="text" id="guestFirstName" class="form-input" placeholder="e.g. Sarah" required>
+                <input type="text" id="guestFirstName" class="form-input" placeholder="e.g. Elissa" required>
               </div>
               <div class="form-group">
                 <label for="guestLastName" class="form-label">Last Name</label>
-                <input type="text" id="guestLastName" class="form-input" placeholder="e.g. Connor" required>
+                <input type="text" id="guestLastName" class="form-input" placeholder="e.g. Massoud" required>
               </div>
-            </div>
-            
-            <div class="form-group">
-              <label for="guestEmail" class="form-label">Email Address</label>
-              <input type="email" id="guestEmail" class="form-input" placeholder="e.g. sarah@example.com" required>
             </div>
             
             <div class="form-group">
               <label class="form-label">Will you be attending?</label>
               <div class="radio-group">
                 <label class="radio-label">
-                  <input type="radio" name="attendance" value="attending" checked>
-                  Joyfully Accept
+                  <input type="radio" name="attendance" value="accepted" checked>
+                  Accepted
                 </label>
                 <label class="radio-label">
-                  <input type="radio" name="attendance" value="not-attending">
-                  Regretfully Decline
+                  <input type="radio" name="attendance" value="rejected">
+                  Rejected
                 </label>
               </div>
             </div>
-            
-            <!-- Interactive conditional inputs -->
-            <div id="attendingDetails">
-              <div class="form-group">
-                <label for="mealPreference" class="form-label">Meal Preference</label>
-                <select id="mealPreference" class="form-input">
-                  <option value="beef">Garlic Herb Grilled Ribeye</option>
-                  <option value="fish">Pan-Seared Pacific Salmon</option>
-                  <option value="vegetarian">Wild Mushroom Risotto (V)</option>
-                  <option value="vegan">Roasted Butternut Squash Steak (VG)</option>
-                </select>
-              </div>
-              
-              <div class="form-group">
-                <label for="dietaryRestrictions" class="form-label">Dietary Restrictions / Allergies</label>
-                <input type="text" id="dietaryRestrictions" class="form-input" placeholder="e.g. Gluten-free, Nut allergy (leave blank if none)">
-              </div>
-              
-              <div class="form-group">
-                <label for="songRequest" class="form-label">Song Request (Get on the dance floor!)</label>
-                <input type="text" id="songRequest" class="form-input" placeholder="e.g. 'Dancing Queen' by ABBA">
-              </div>
+
+            <div class="form-group">
+              <label for="guestCount" class="form-label">How many guests are coming?</label>
+              <input type="number" id="guestCount" class="form-input" min="1" max="20" value="1" required>
             </div>
             
             <div style="text-align: center; margin-top: 1.5rem;">

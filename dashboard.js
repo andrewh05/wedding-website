@@ -1,22 +1,12 @@
 /* 
   Wedding Hub - Admin Dashboard Controller
-  Features: Live Iframe Customizer Synchronizer, RSVP CRUD Engine, Mock Analytics Generator, CSV Data Exporter, Planner Editors
+  Features: Live Iframe Customizer Synchronizer, RSVP CRUD Engine, CSV Data Exporter, Planner Editors
 */
-
-// --- PRELOADED MOCK RSVP DATASET (For instant visualization) ---
-const MOCK_RSVPS = [
-  { id: "101", firstName: "Jane", lastName: "Doe", email: "jane.doe@example.com", attendance: "Attending", meal: "Fish", dietary: "Gluten-Free", song: "Sweet Caroline - Neil Diamond", timestamp: new Date(Date.now() - 86400000 * 3).toISOString() },
-  { id: "102", firstName: "John", lastName: "Smith", email: "john.smith@gmail.com", attendance: "Attending", meal: "Beef", dietary: "None", song: "Shut Up and Dance - Walk the Moon", timestamp: new Date(Date.now() - 86400000 * 2).toISOString() },
-  { id: "103", firstName: "Alice", lastName: "Johnson", email: "alice.j@outlook.com", attendance: "Not Attending", meal: "-", dietary: "-", song: "-", timestamp: new Date(Date.now() - 86400000 * 1).toISOString() },
-  { id: "104", firstName: "Robert", lastName: "Miller", email: "robert.miller@yahoo.com", attendance: "Attending", meal: "Vegan", dietary: "Dairy-Free", song: "Billie Jean - Michael Jackson", timestamp: new Date(Date.now() - 43200000).toISOString() },
-  { id: "105", firstName: "Emily", lastName: "Davis", email: "emily.d@example.com", attendance: "Attending", meal: "Vegetarian", dietary: "Nut Allergy", song: "Dancing Queen - ABBA", timestamp: new Date().toISOString() }
-];
 
 // --- CORE SYSTEM STATE ---
 let config = {};
 let rsvps = [];
 
-const CONFIG_STORAGE_KEY = "wedding_website_config";
 const DEFAULT_CONFIG = {
   names: "Elissa & Elie",
   date: "2026-08-01T16:00:00",
@@ -113,30 +103,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 // --- DATA INITIALIZER ---
 async function initData() {
-  // Load configuration
-  const params = new URLSearchParams(window.location.search);
-  if (params.has("resetConfig")) {
-    localStorage.removeItem(CONFIG_STORAGE_KEY);
-  }
-
-  const savedConfig = localStorage.getItem(CONFIG_STORAGE_KEY);
-  if (savedConfig) {
-    try {
-      const parsedConfig = JSON.parse(savedConfig);
-      const savedDefaultsAreStale =
-        parsedConfig._defaultConfigSignature !== DEFAULT_CONFIG_SIGNATURE && !parsedConfig._customized;
-
-      config = normalizeConfig(savedDefaultsAreStale ? cloneDefaultConfig() : parsedConfig);
-      saveConfig(false);
-    } catch (e) {
-      config = normalizeConfig(cloneDefaultConfig());
-      saveConfig(false);
-    }
-  } else {
-    // Falls back to defaults
-    config = normalizeConfig(cloneDefaultConfig());
-    saveConfig(false);
-  }
+  config = normalizeConfig(cloneDefaultConfig());
+  config.registry = [];
+  rsvps = [];
 
   if (window.WeddingSupabase?.isEnabled()) {
     try {
@@ -148,43 +117,41 @@ async function initData() {
 
       if (remoteConfig) {
         config = normalizeConfig(remoteConfig);
-        saveConfig(false);
       } else {
         await window.WeddingSupabase.saveSiteConfig(config);
       }
 
-      if (remoteRegistry && remoteRegistry.length > 0) {
-        config.registry = remoteRegistry;
-      }
-
+      config.registry = remoteRegistry || [];
       rsvps = remoteRsvps || [];
       return;
     } catch (error) {
       console.error("Supabase dashboard load failed:", error);
     }
-  }
-
-  const savedRsvps = localStorage.getItem("wedding_rsvps");
-  if (!savedRsvps) {
-    rsvps = [...MOCK_RSVPS];
-    localStorage.setItem("wedding_rsvps", JSON.stringify(rsvps));
-    return;
-  }
-
-  try {
-    rsvps = JSON.parse(savedRsvps);
-  } catch (e) {
-    rsvps = [];
+  } else {
+    console.warn("Supabase is not configured. Dashboard database data cannot be loaded.");
   }
 }
 
-// Save core configuration to LocalStorage
-function saveConfig(markCustomized = true) {
+async function reloadDashboardData() {
+  await initData();
+  renderOverview();
+  renderRsvpTable(document.getElementById("rsvpSearch")?.value || "");
+  renderRegistryCrud();
+}
+
+// Save core configuration to Supabase
+async function saveConfig(markCustomized = true) {
   config = normalizeConfig({
     ...config,
     _customized: markCustomized || config._customized
   });
-  localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(config));
+
+  if (!window.WeddingSupabase?.isEnabled()) {
+    console.warn("Supabase is not configured. Site configuration was not saved.");
+    return null;
+  }
+
+  return window.WeddingSupabase.saveSiteConfig(config);
 }
 
 // --- SIDEBAR TABS SWITCHING ---
@@ -218,12 +185,12 @@ function setupNavigation() {
 function renderOverview() {
   // Update numbers
   const total = rsvps.length;
-  const attending = rsvps.filter(r => r.attendance === "Attending").length;
-  const declined = rsvps.filter(r => r.attendance === "Not Attending").length;
+  const accepted = rsvps.filter(rsvp => rsvp.attendance === "Attending").length;
+  const rejected = rsvps.filter(rsvp => rsvp.attendance === "Not Attending").length;
   
   document.getElementById("statTotalRsvp").textContent = total;
-  document.getElementById("statAttending").textContent = attending;
-  document.getElementById("statDeclined").textContent = declined;
+  document.getElementById("statAttending").textContent = accepted;
+  document.getElementById("statDeclined").textContent = rejected;
   
   // Days to wedding calculation
   const weddingTime = new Date(config.date).getTime();
@@ -240,75 +207,64 @@ function renderOverview() {
     daysEl.style.fontSize = "2.25rem";
   }
 
-  // Render Meal preferences progress bars
-  const mealBreakdown = { Beef: 0, Fish: 0, Vegetarian: 0, Vegan: 0 };
-  let attendingCount = 0;
-  
-  rsvps.forEach(rsvp => {
-    if (rsvp.attendance === "Attending") {
-      attendingCount++;
-      const meal = rsvp.meal; // Beef, Fish, etc.
-      if (mealBreakdown[meal] !== undefined) {
-        mealBreakdown[meal]++;
-      }
-    }
+  const guestCountBreakdown = {};
+  rsvps.filter(rsvp => rsvp.attendance === "Attending").forEach(rsvp => {
+    const partySize = Number(rsvp.guestCount) || 1;
+    guestCountBreakdown[partySize] = (guestCountBreakdown[partySize] || 0) + 1;
   });
 
   const mealContainer = document.getElementById("mealBreakdownContainer");
   if (mealContainer) {
     mealContainer.innerHTML = "";
-    Object.keys(mealBreakdown).forEach(meal => {
-      const count = mealBreakdown[meal];
-      const percent = attendingCount > 0 ? Math.round((count / attendingCount) * 100) : 0;
-      
-      const item = document.createElement("div");
-      item.className = "meal-item";
-      item.innerHTML = `
-        <div class="meal-info" style="width: 100%;">
-          <div class="meal-name">
-            <span>${meal}</span>
-            <span class="meal-count">${count} guests (${percent}%)</span>
+
+    if (Object.keys(guestCountBreakdown).length === 0) {
+      mealContainer.innerHTML = "<p style='color: #888; font-style: italic;'>No RSVP data in the database yet.</p>";
+    } else {
+      Object.keys(guestCountBreakdown).sort((a, b) => Number(a) - Number(b)).forEach(partySize => {
+        const count = guestCountBreakdown[partySize];
+        const percent = total > 0 ? Math.round((count / total) * 100) : 0;
+        const guestLabel = Number(partySize) === 1 ? "guest" : "guests";
+        
+        const item = document.createElement("div");
+        item.className = "meal-item";
+        item.innerHTML = `
+          <div class="meal-info" style="width: 100%;">
+            <div class="meal-name">
+              <span>${partySize} ${guestLabel}</span>
+              <span class="meal-count">${count} RSVP${count === 1 ? "" : "s"} (${percent}%)</span>
+            </div>
+            <div class="meal-progress-bg">
+              <div class="meal-progress-bar" style="width: ${percent}%;"></div>
+            </div>
           </div>
-          <div class="meal-progress-bg">
-            <div class="meal-progress-bar" style="width: ${percent}%;"></div>
-          </div>
-        </div>
-      `;
-      mealContainer.appendChild(item);
-    });
+        `;
+        mealContainer.appendChild(item);
+      });
+    }
   }
 
-  // Render quick feed for songs and allergy warnings
+  // Render recent RSVP records
   const overviewList = document.getElementById("quickOverviewList");
   if (overviewList) {
     overviewList.innerHTML = "";
     
-    // Gather warnings
-    const entries = rsvps.filter(r => r.attendance === "Attending" && (r.dietary !== "None" && r.dietary !== "-" || r.song !== "None" && r.song !== "-"));
-    
-    if (entries.length === 0) {
-      overviewList.innerHTML = "<p style='color: #888; font-style: italic;'>No song requests or dietary alerts yet.</p>";
+    if (rsvps.length === 0) {
+      overviewList.innerHTML = "<p style='color: #888; font-style: italic;'>No RSVP records in the database yet.</p>";
       return;
     }
 
-    entries.forEach(r => {
+    rsvps.slice(0, 6).forEach(r => {
       const card = document.createElement("div");
       card.style.marginBottom = "0.75rem";
       card.style.padding = "0.75rem";
       card.style.borderRadius = "var(--border-radius-sm)";
-      card.style.backgroundColor = "#fcf8e3";
-      card.style.borderLeft = "4px solid #f0ad4e";
-      
-      let html = `<strong>${r.firstName} ${r.lastName}</strong>: `;
-      if (r.dietary && r.dietary !== "None" && r.dietary !== "-") {
-        html += `<span style="color:#c9302c;"><i class="fa-solid fa-triangle-exclamation"></i> Diet: ${r.dietary}</span>`;
-      }
-      if (r.song && r.song !== "None" && r.song !== "-") {
-        if (r.dietary && r.dietary !== "None" && r.dietary !== "-") html += " &bull; ";
-        html += `<span style="color:#31708f;"><i class="fa-solid fa-music"></i> Song: ${r.song}</span>`;
-      }
-      
-      card.innerHTML = html;
+      card.style.backgroundColor = "#f7f9f8";
+      card.style.borderLeft = "4px solid #8f9bab";
+      card.innerHTML = `
+        <strong>${r.firstName} ${r.lastName}</strong>
+        <span style="color:#647082;">&bull; ${r.attendance === "Attending" ? "Accepted" : "Rejected"}</span>
+        <span style="color:#647082;">&bull; ${r.guestCount || 0} guest${(r.guestCount || 0) === 1 ? "" : "s"}</span>
+      `;
       overviewList.appendChild(card);
     });
   }
@@ -324,15 +280,14 @@ function renderRsvpTable(query = "") {
   
   const filtered = rsvps.filter(r => {
     const fullName = `${r.firstName} ${r.lastName}`.toLowerCase();
-    const email = r.email.toLowerCase();
     const q = query.toLowerCase();
-    return fullName.includes(q) || email.includes(q);
+    return fullName.includes(q);
   });
 
   if (filtered.length === 0) {
     rsvpTableBody.innerHTML = `
       <tr>
-        <td colspan="7" style="text-align: center; color: #888; padding: 2rem;">
+        <td colspan="5" style="text-align: center; color: #888; padding: 2rem;">
           No RSVP records found matching your search.
         </td>
       </tr>
@@ -342,15 +297,13 @@ function renderRsvpTable(query = "") {
 
   filtered.forEach(r => {
     const tr = document.createElement("tr");
-    const badgeClass = r.attendance === "Attending" ? "badge-attending" : "badge-not-attending";
-    
+    const isAccepted = r.attendance === "Attending";
+    const badgeClass = isAccepted ? "badge-attending" : "badge-not-attending";
     tr.innerHTML = `
       <td style="font-weight:600; color:#13233a;">${r.firstName} ${r.lastName}</td>
-      <td>${r.email}</td>
-      <td><span class="badge ${badgeClass}">${r.attendance}</span></td>
-      <td>${r.meal || "-"}</td>
-      <td>${r.dietary || "-"}</td>
-      <td>${r.song || "-"}</td>
+      <td><span class="badge ${badgeClass}">${isAccepted ? "Accepted" : "Rejected"}</span></td>
+      <td>${r.guestCount || 0}</td>
+      <td>${r.timestamp ? new Date(r.timestamp).toLocaleDateString() : "-"}</td>
       <td>
         <div class="table-ops">
           <button class="op-btn op-btn-edit" onclick="editRsvpManual('${r.id}')" title="Edit RSVP">
@@ -382,15 +335,12 @@ if (exportCsvBtn) {
       return;
     }
 
-    const headers = ["First Name", "Last Name", "Email", "Attendance", "Meal Selection", "Dietary Restrictions", "Song Request", "Timestamp"];
+    const headers = ["First Name", "Last Name", "Status", "Guests Coming", "Timestamp"];
     const rows = rsvps.map(r => [
       r.firstName,
       r.lastName,
-      r.email,
-      r.attendance,
-      r.meal,
-      r.dietary,
-      r.song,
+      r.attendance === "Attending" ? "Accepted" : "Rejected",
+      r.guestCount || 0,
       r.timestamp || ""
     ]);
 
@@ -442,12 +392,12 @@ window.deleteRegistryItem = async function(index) {
     const item = config.registry[index];
 
     try {
-      if (window.WeddingSupabase?.isEnabled() && item.id) {
-        await window.WeddingSupabase.deleteRegistryItem(item.id);
+      if (!window.WeddingSupabase?.isEnabled() || !item.id) {
+        throw new Error("Supabase is not configured for registry deletes.");
       }
 
-      config.registry.splice(index, 1);
-      saveConfig();
+      await window.WeddingSupabase.deleteRegistryItem(item.id);
+      config.registry = await window.WeddingSupabase.listRegistryItems() || [];
       renderRegistryCrud();
     } catch (error) {
       console.error("Registry delete failed:", error);
@@ -482,22 +432,16 @@ if (adminRegistryForm) {
     const newItem = { ...existingItem, site, title, desc, link };
 
     try {
-      if (window.WeddingSupabase?.isEnabled()) {
-        const savedItem = await window.WeddingSupabase.saveRegistryItem(
-          newItem,
-          indexStr !== "" ? parseInt(indexStr) : config.registry.length
-        );
-        Object.assign(newItem, savedItem);
+      if (!window.WeddingSupabase?.isEnabled()) {
+        throw new Error("Supabase is not configured for registry saves.");
       }
 
-      if (indexStr !== "") {
-        config.registry[parseInt(indexStr)] = newItem;
-      } else {
-        if (!config.registry) config.registry = [];
-        config.registry.push(newItem);
-      }
+      await window.WeddingSupabase.saveRegistryItem(
+        newItem,
+        indexStr !== "" ? parseInt(indexStr) : config.registry.length
+      );
 
-      saveConfig();
+      config.registry = await window.WeddingSupabase.listRegistryItems() || [];
       renderRegistryCrud();
       document.getElementById("registryModal").classList.remove("active");
     } catch (error) {
@@ -511,12 +455,12 @@ if (adminRegistryForm) {
 window.deleteRsvpManual = async function(id) {
   if (confirm("Are you sure you want to permanently delete this RSVP guest record?")) {
     try {
-      if (window.WeddingSupabase?.isEnabled()) {
-        await window.WeddingSupabase.deleteRsvp(id);
+      if (!window.WeddingSupabase?.isEnabled()) {
+        throw new Error("Supabase is not configured for RSVP deletes.");
       }
 
-      rsvps = rsvps.filter(r => r.id !== id);
-      localStorage.setItem("wedding_rsvps", JSON.stringify(rsvps));
+      await window.WeddingSupabase.deleteRsvp(id);
+      rsvps = await window.WeddingSupabase.listRsvps() || [];
       renderOverview();
       renderRsvpTable(document.getElementById("rsvpSearch").value);
     } catch (error) {
@@ -533,36 +477,23 @@ window.editRsvpManual = function(id) {
   document.getElementById("rsvpEditId").value = guest.id;
   document.getElementById("manualFirstName").value = guest.firstName;
   document.getElementById("manualLastName").value = guest.lastName;
-  document.getElementById("manualEmail").value = guest.email;
-  
-  if (guest.attendance === "Attending") {
-    document.getElementById("attendingRadio").checked = true;
-    document.getElementById("manualAttendingDetails").style.display = "block";
-    
-    // Set drop down choice or default
-    const mValue = guest.meal ? guest.meal.charAt(0).toUpperCase() + guest.meal.slice(1) : "Beef";
-    document.getElementById("manualMeal").value = mValue;
-    document.getElementById("manualDietary").value = guest.dietary === "-" ? "" : guest.dietary;
-    document.getElementById("manualSong").value = guest.song === "-" ? "" : guest.song;
-  } else {
-    document.getElementById("decliningRadio").checked = true;
-    document.getElementById("manualAttendingDetails").style.display = "none";
-  }
+  const isAccepted = guest.attendance === "Attending";
+  document.getElementById(isAccepted ? "manualAcceptedRadio" : "manualRejectedRadio").checked = true;
+  document.getElementById("manualGuestCount").disabled = !isAccepted;
+  document.getElementById("manualGuestCount").value = isAccepted ? (guest.guestCount || 1) : 0;
 
   document.getElementById("rsvpModalTitle").textContent = "Edit Guest RSVP";
   document.getElementById("rsvpModal").classList.add("active");
 };
 
-// Manual entry conditional form displays
 const manualAttendanceRadios = document.querySelectorAll("input[name='manualAttendance']");
-const manualAttendingDetails = document.getElementById("manualAttendingDetails");
-
-manualAttendanceRadios.forEach(radio => {
-  radio.addEventListener("change", (e) => {
-    if (e.target.value === "Attending") {
-      manualAttendingDetails.style.display = "block";
-    } else {
-      manualAttendingDetails.style.display = "none";
+const manualGuestCountInput = document.getElementById("manualGuestCount");
+manualAttendanceRadios.forEach((radio) => {
+  radio.addEventListener("change", () => {
+    const isRejected = document.querySelector("input[name='manualAttendance']:checked")?.value === "Not Attending";
+    if (manualGuestCountInput) {
+      manualGuestCountInput.disabled = isRejected;
+      manualGuestCountInput.value = isRejected ? "0" : "1";
     }
   });
 });
@@ -575,45 +506,30 @@ if (adminRsvpForm) {
     const id = document.getElementById("rsvpEditId").value;
     const firstName = document.getElementById("manualFirstName").value.trim();
     const lastName = document.getElementById("manualLastName").value.trim();
-    const email = document.getElementById("manualEmail").value.trim();
-    const attendance = document.querySelector("input[name='manualAttendance']:checked").value;
+    const guestCount = parseInt(document.getElementById("manualGuestCount").value, 10);
+    const attendance = document.querySelector("input[name='manualAttendance']:checked")?.value || "Attending";
+    const isAccepted = attendance === "Attending";
 
     let updatedGuest = {
       id: id || (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString()),
       firstName,
       lastName,
-      email,
+      guestCount: isAccepted && Number.isInteger(guestCount) && guestCount > 0 ? guestCount : 0,
+      email: "-",
       attendance,
+      meal: "-",
+      dietary: "-",
+      song: "-",
       timestamp: new Date().toISOString()
     };
 
-    if (attendance === "Attending") {
-      const meal = document.getElementById("manualMeal").value;
-      const dietary = document.getElementById("manualDietary").value.trim();
-      const song = document.getElementById("manualSong").value.trim();
-
-      updatedGuest.meal = meal;
-      updatedGuest.dietary = dietary || "None";
-      updatedGuest.song = song || "None";
-    } else {
-      updatedGuest.meal = "-";
-      updatedGuest.dietary = "-";
-      updatedGuest.song = "-";
-    }
-
     try {
-      if (window.WeddingSupabase?.isEnabled()) {
-        updatedGuest = await window.WeddingSupabase.saveRsvp(updatedGuest);
+      if (!window.WeddingSupabase?.isEnabled()) {
+        throw new Error("Supabase is not configured for RSVP saves.");
       }
 
-      if (id) {
-        const index = rsvps.findIndex(r => r.id === id);
-        if (index !== -1) rsvps[index] = updatedGuest;
-      } else {
-        rsvps.push(updatedGuest);
-      }
-
-      localStorage.setItem("wedding_rsvps", JSON.stringify(rsvps));
+      await window.WeddingSupabase.saveRsvp(updatedGuest);
+      rsvps = await window.WeddingSupabase.listRsvps() || [];
       renderOverview();
       renderRsvpTable(document.getElementById("rsvpSearch").value);
       document.getElementById("rsvpModal").classList.remove("active");
@@ -647,9 +563,10 @@ function setupModals() {
           if (resetInput) resetInput.value = "";
         }
         
-        // Adjust manual details display
         if (m.modal === "rsvpModal") {
-          document.getElementById("manualAttendingDetails").style.display = "block";
+          document.getElementById("manualAcceptedRadio").checked = true;
+          document.getElementById("manualGuestCount").value = "1";
+          document.getElementById("manualGuestCount").disabled = false;
         }
         
         // Reset title
@@ -688,16 +605,7 @@ function setupModals() {
   });
 }
 
-// Listen for updates from other frames (e.g. client submission in preview refresh)
-window.addEventListener("storage", (e) => {
-  if (e.key === "wedding_rsvps") {
-    rsvps = JSON.parse(e.newValue || "[]");
-    renderOverview();
-    renderRsvpTable(document.getElementById("rsvpSearch")?.value || "");
-  }
-});
+// Listen for updates from the client preview and reload from Supabase.
 window.addEventListener("rsvp-submitted", async () => {
-  await initData();
-  renderOverview();
-  renderRsvpTable(document.getElementById("rsvpSearch")?.value || "");
+  await reloadDashboardData();
 });
