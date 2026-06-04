@@ -8,9 +8,36 @@
   const client = hasSupabaseConfig && window.supabase
     ? window.supabase.createClient(config.url, config.anonKey)
     : null;
+  const serverApiBase = config.serverApiBase || "/.netlify/functions/db";
 
   function isEnabled() {
-    return Boolean(client);
+    return Boolean(client || serverApiBase);
+  }
+
+  async function callServerApi(action, options = {}) {
+    const url = new URL(serverApiBase, window.location.origin);
+    url.searchParams.set("action", action);
+
+    if (options.params) {
+      Object.entries(options.params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) url.searchParams.set(key, value);
+      });
+    }
+
+    const response = await fetch(url.toString(), {
+      method: options.method || "GET",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: options.body ? JSON.stringify(options.body) : undefined
+    });
+
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(payload.error || "Database request failed.");
+    }
+
+    return payload.data;
   }
 
   function toRsvpRow(rsvp) {
@@ -64,7 +91,7 @@
   }
 
   async function getSiteConfig() {
-    if (!client) return null;
+    if (!client) return callServerApi("siteConfig");
 
     const { data, error } = await client
       .from("site_config")
@@ -77,7 +104,10 @@
   }
 
   async function saveSiteConfig(nextConfig) {
-    if (!client) return null;
+    if (!client) return callServerApi("saveSiteConfig", {
+      method: "POST",
+      body: { config: nextConfig }
+    });
 
     const { error } = await client
       .from("site_config")
@@ -92,7 +122,7 @@
   }
 
   async function listRsvps() {
-    if (!client) return null;
+    if (!client) return callServerApi("listRsvps");
 
     const { data, error } = await client
       .from("rsvps")
@@ -104,7 +134,8 @@
   }
 
   async function getRsvp(id) {
-    if (!client || !id) return null;
+    if (!client) return callServerApi("getRsvp", { params: { id } });
+    if (!id) return null;
 
     const { data, error } = await client
       .from("rsvps")
@@ -117,7 +148,10 @@
   }
 
   async function saveRsvp(rsvp) {
-    if (!client) return null;
+    if (!client) return callServerApi("saveRsvp", {
+      method: "POST",
+      body: { rsvp }
+    });
 
     const row = toRsvpRow(rsvp);
     const { data, error } = await client
@@ -131,7 +165,10 @@
   }
 
   async function deleteRsvp(id) {
-    if (!client) return null;
+    if (!client) return callServerApi("deleteRsvp", {
+      method: "DELETE",
+      params: { id }
+    });
 
     const { error } = await client
       .from("rsvps")
@@ -143,7 +180,7 @@
   }
 
   async function listRegistryItems() {
-    if (!client) return null;
+    if (!client) return callServerApi("listRegistryItems");
 
     const { data, error } = await client
       .from("registry_items")
@@ -156,7 +193,10 @@
   }
 
   async function saveRegistryItem(item, sortOrder = 0) {
-    if (!client) return null;
+    if (!client) return callServerApi("saveRegistryItem", {
+      method: "POST",
+      body: { item, sortOrder }
+    });
 
     const row = toRegistryRow(item, sortOrder);
     if (item.id) row.id = item.id;
@@ -172,7 +212,10 @@
   }
 
   async function deleteRegistryItem(id) {
-    if (!client) return null;
+    if (!client) return callServerApi("deleteRegistryItem", {
+      method: "DELETE",
+      params: { id }
+    });
 
     const { error } = await client
       .from("registry_items")

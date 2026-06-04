@@ -1,0 +1,6 @@
+{
+  "scripts": {},
+  "dependencies": {
+    "pg": "^8.13.1"
+  }
+}
