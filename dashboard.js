@@ -28,13 +28,13 @@ const DEFAULT_CONFIG = {
   musicName: "Preset Romance Instrumental",
   theme: "navy",
   bride: {
-    name: "Sarah Jenkins",
-    bio: "Sarah is a designer who loves watercolor, botanical gardens, and morning espresso. She cannot wait to marry her best friend and celebrate under the Sonoma redwoods.",
+    name: "Elissa Massoud",
+    bio: "",
     avatar: "./assets/bride.png"
   },
   groom: {
-    name: "David Miller",
-    bio: "David is a software architect who enjoys hiking coastal trails, roasting specialty coffee, and playing guitar. He is thrilled to embark on life's biggest adventure yet.",
+    name: "Elie Rakwe",
+    bio: "",
     avatar: "./assets/groom.png"
   },
   timeline: [
