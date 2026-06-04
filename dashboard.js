@@ -8,7 +8,7 @@ let config = {};
 let rsvps = [];
 
 const DEFAULT_CONFIG = {
-  names: "Elissa & Elie",
+  names: "Elie & Elissa",
   date: "2026-08-01T16:00:00",
   location: "Andaket, Akkar",
   venue: "Andaket, Akkar",
