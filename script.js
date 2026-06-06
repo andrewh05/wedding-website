@@ -448,7 +448,9 @@ function goToSlide(index) {
   // Transition the slider wrapper horizontally
   const wrapper = document.getElementById("swipeWrapper");
   if (wrapper) {
-    wrapper.style.transform = `translateX(-${index * 100}vw)`;
+    const targetSlide = document.getElementById(slides[index]);
+    wrapper.style.width = `${slides.length * 100}vw`;
+    wrapper.style.transform = `translateX(-${targetSlide?.offsetLeft || 0}px)`;
   }
   
   // Highlight active link in Navbar header

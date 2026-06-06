@@ -820,7 +820,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .swipe-wrapper {
   display: flex;
-  width: 600vw;
+  width: 500vw;
   height: 100%;
   transition: transform 0.85s cubic-bezier(0.25, 1, 0.5, 1);
 }
