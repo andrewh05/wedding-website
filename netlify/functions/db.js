@@ -20,6 +20,27 @@ function json(statusCode, body) {
   };
 }
 
+const temporaryNetworkCodes = new Set([
+  "EAI_AGAIN",
+  "ENOTFOUND",
+  "ECONNREFUSED",
+  "ECONNRESET",
+  "ETIMEDOUT",
+  "EHOSTUNREACH",
+  "ENETUNREACH",
+  "EPERM"
+]);
+
+function databaseErrorResponse(error) {
+  if (temporaryNetworkCodes.has(error?.code)) {
+    return json(503, {
+      error: "The database is temporarily unreachable. Check your internet/DNS connection and Supabase DATABASE_URL."
+    });
+  }
+
+  return json(500, { error: error?.message || "Database request failed." });
+}
+
 function toRsvp(row) {
   return {
     id: row.id,
@@ -157,6 +178,6 @@ exports.handler = async function handler(event) {
     return json(404, { error: "Unknown database action." });
   } catch (error) {
     console.error(error);
-    return json(500, { error: error.message || "Database request failed." });
+    return databaseErrorResponse(error);
   }
 };

@@ -1,5 +1,26 @@
 const { Client } = require("pg");
 
+const temporaryNetworkCodes = new Set([
+  "EAI_AGAIN",
+  "ENOTFOUND",
+  "ECONNREFUSED",
+  "ECONNRESET",
+  "ETIMEDOUT",
+  "EHOSTUNREACH",
+  "ENETUNREACH",
+  "EPERM"
+]);
+
+function errorBody(error) {
+  if (temporaryNetworkCodes.has(error?.code)) {
+    return {
+      error: "The database is temporarily unreachable. Check your internet/DNS connection and Supabase DATABASE_URL."
+    };
+  }
+
+  return { error: error.message };
+}
+
 exports.handler = async function handler() {
   if (!process.env.DATABASE_URL) {
     return {
@@ -26,8 +47,8 @@ exports.handler = async function handler() {
     };
   } catch (error) {
     return {
-      statusCode: 500,
-      body: JSON.stringify({ error: error.message })
+      statusCode: temporaryNetworkCodes.has(error?.code) ? 503 : 500,
+      body: JSON.stringify(errorBody(error))
     };
   } finally {
     await client.end().catch(() => {});
