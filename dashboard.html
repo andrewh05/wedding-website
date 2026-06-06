@@ -130,6 +130,7 @@
                   <th>Guest Name</th>
                   <th>Status</th>
                   <th>Guests Coming</th>
+                  <th>Guest Limit</th>
                   <th>Submitted</th>
                   <th>Actions</th>
                 </tr>
@@ -198,6 +199,21 @@
         <div class="form-group">
           <label class="form-label" for="manualGuestCount">Guests Coming</label>
           <input type="number" id="manualGuestCount" class="form-input" min="1" max="20" value="1" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="manualGuestLimit">Guest Limit for Invite Link</label>
+          <input type="number" id="manualGuestLimit" class="form-input" min="1" max="20" value="1" required>
+        </div>
+
+        <div class="invite-link-panel" id="rsvpInviteLinkPanel" hidden>
+          <label class="form-label" for="rsvpInviteLinkInput">Invite Link</label>
+          <div class="invite-link-row">
+            <input type="text" id="rsvpInviteLinkInput" class="form-input" readonly>
+            <button type="button" class="admin-btn admin-btn-primary" id="copySavedRsvpLinkBtn">
+              <i class="fa-solid fa-copy"></i> Copy
+            </button>
+          </div>
         </div>
         
         <div class="modal-footer">

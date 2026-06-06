@@ -161,6 +161,28 @@ const THEME_PRESETS = {
 let currentConfig = cloneDefaultConfig();
 let activeRsvpInvite = null;
 
+function getActiveGuestLimit() {
+  const guestLimit = Number(activeRsvpInvite?.guestLimit);
+  if (!Number.isInteger(guestLimit) || guestLimit < 1) return 20;
+  return Math.min(guestLimit, 20);
+}
+
+function updateGuestLimitDisplay() {
+  const limitNote = document.getElementById("guestLimitNote");
+  const guestInput = document.getElementById("guestCount");
+  const guestLimit = getActiveGuestLimit();
+
+  if (guestInput) {
+    guestInput.max = String(guestLimit);
+  }
+
+  if (limitNote) {
+    limitNote.textContent = activeRsvpInvite
+      ? `Your invite allows up to ${guestLimit} guest${guestLimit === 1 ? "" : "s"}.`
+      : "";
+  }
+}
+
 function saveLocalConfig(nextConfig) {
   localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(nextConfig));
 }
@@ -240,13 +262,17 @@ async function loadRsvpInvite() {
     }
 
     const isRejected = invite.attendance === "Not Attending";
+    const inviteLimit = Number.isInteger(Number(invite.guestLimit)) ? Number(invite.guestLimit) : 1;
     const acceptedRadio = document.querySelector("input[name='attendance'][value='accepted']");
     const rejectedRadio = document.querySelector("input[name='attendance'][value='rejected']");
     if (acceptedRadio) acceptedRadio.checked = !isRejected;
     if (rejectedRadio) rejectedRadio.checked = isRejected;
-    if (guestCountInput) {
-      guestCountInput.disabled = isRejected;
-      guestCountInput.value = isRejected ? "0" : String(invite.guestCount || 1);
+    updateGuestLimitDisplay();
+
+    const guestInput = document.getElementById("guestCount");
+    if (guestInput) {
+      guestInput.disabled = isRejected;
+      guestInput.value = isRejected ? "0" : String(Math.min(invite.guestCount || 1, inviteLimit));
     }
 
     goToSlide(slides.indexOf("rsvp"));
@@ -595,6 +621,7 @@ attendanceRadios.forEach((radio) => {
     if (guestCountInput) {
       guestCountInput.disabled = isRejected;
       guestCountInput.value = isRejected ? "0" : "1";
+      updateGuestLimitDisplay();
     }
   });
 });
@@ -608,8 +635,9 @@ if (rsvpForm) {
     const attendance = document.querySelector("input[name='attendance']:checked")?.value || "accepted";
     const guestCount = parseInt(document.getElementById("guestCount").value, 10);
     const isAccepted = attendance === "accepted";
+    const guestLimit = getActiveGuestLimit();
     
-    if (!firstName || !lastName || (isAccepted && (!Number.isInteger(guestCount) || guestCount < 1))) {
+    if (!firstName || !lastName || (isAccepted && (!Number.isInteger(guestCount) || guestCount < 1 || guestCount > guestLimit))) {
       showRsvpAlert(rsvpErrorAlert);
       return;
     }
@@ -619,6 +647,7 @@ if (rsvpForm) {
       firstName,
       lastName,
       guestCount: isAccepted ? guestCount : 0,
+      guestLimit,
       email: "-",
       attendance: isAccepted ? "Attending" : "Not Attending",
       meal: "-",
@@ -652,9 +681,17 @@ if (rsvpForm) {
     
     // Successful actions feedback
     showRsvpAlert(rsvpSuccessAlert);
-    rsvpForm.reset();
-    document.getElementById("guestCount").disabled = false;
-    document.getElementById("guestCount").value = "1";
+    if (!activeRsvpInvite) {
+      rsvpForm.reset();
+      document.getElementById("guestCount").disabled = false;
+      document.getElementById("guestCount").value = "1";
+    } else {
+      activeRsvpInvite = {
+        ...activeRsvpInvite,
+        ...guestResponse
+      };
+      updateGuestLimitDisplay();
+    }
     
     // Trigger customizer event if inside dashboard context frame
     window.dispatchEvent(new Event("rsvp-submitted"));

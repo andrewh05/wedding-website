@@ -299,7 +299,7 @@ function renderRsvpTable(query = "") {
   if (filtered.length === 0) {
     rsvpTableBody.innerHTML = `
       <tr>
-        <td colspan="5" style="text-align: center; color: #888; padding: 2rem;">
+        <td colspan="6" style="text-align: center; color: #888; padding: 2rem;">
           No RSVP records found matching your search.
         </td>
       </tr>
@@ -315,6 +315,7 @@ function renderRsvpTable(query = "") {
       <td style="font-weight:600; color:#13233a;">${r.firstName} ${r.lastName}</td>
       <td><span class="badge ${badgeClass}">${status}</span></td>
       <td>${r.guestCount || 0}</td>
+      <td>${r.guestLimit || 1}</td>
       <td>${r.timestamp ? new Date(r.timestamp).toLocaleDateString() : "-"}</td>
       <td>
         <div class="table-ops">
@@ -379,12 +380,13 @@ if (exportCsvBtn) {
       return;
     }
 
-    const headers = ["First Name", "Last Name", "Status", "Guests Coming", "Timestamp"];
+    const headers = ["First Name", "Last Name", "Status", "Guests Coming", "Guest Limit", "Timestamp"];
     const rows = rsvps.map(r => [
       r.firstName,
       r.lastName,
       formatRsvpStatus(r.attendance),
       r.guestCount || 0,
+      r.guestLimit || 1,
       r.timestamp || ""
     ]);
 
@@ -527,6 +529,11 @@ window.editRsvpManual = function(id) {
   document.getElementById(radioId).checked = true;
   document.getElementById("manualGuestCount").disabled = !isAccepted;
   document.getElementById("manualGuestCount").value = isAccepted ? (guest.guestCount || 1) : 0;
+  document.getElementById("manualGuestLimit").value = guest.guestLimit || 1;
+  clampManualGuestCount();
+
+  if (rsvpInviteLinkInput) rsvpInviteLinkInput.value = buildRsvpInviteLink(guest.id);
+  if (rsvpInviteLinkPanel) rsvpInviteLinkPanel.hidden = false;
 
   document.getElementById("rsvpModalTitle").textContent = "Edit Guest RSVP";
   document.getElementById("rsvpModal").classList.add("active");
@@ -534,15 +541,54 @@ window.editRsvpManual = function(id) {
 
 const manualAttendanceRadios = document.querySelectorAll("input[name='manualAttendance']");
 const manualGuestCountInput = document.getElementById("manualGuestCount");
+const manualGuestLimitInput = document.getElementById("manualGuestLimit");
+const rsvpInviteLinkPanel = document.getElementById("rsvpInviteLinkPanel");
+const rsvpInviteLinkInput = document.getElementById("rsvpInviteLinkInput");
+const copySavedRsvpLinkBtn = document.getElementById("copySavedRsvpLinkBtn");
+
+function clampManualGuestCount() {
+  if (!manualGuestCountInput || !manualGuestLimitInput) return;
+
+  const guestLimit = Number(manualGuestLimitInput.value) || 1;
+  manualGuestCountInput.max = String(guestLimit);
+
+  const guestCount = Number(manualGuestCountInput.value);
+  if (!manualGuestCountInput.disabled && guestCount > guestLimit) {
+    manualGuestCountInput.value = String(guestLimit);
+  }
+}
+
 manualAttendanceRadios.forEach((radio) => {
   radio.addEventListener("change", () => {
     const isAccepted = document.querySelector("input[name='manualAttendance']:checked")?.value === "Attending";
     if (manualGuestCountInput) {
       manualGuestCountInput.disabled = !isAccepted;
       manualGuestCountInput.value = isAccepted ? "1" : "0";
+      clampManualGuestCount();
     }
   });
 });
+
+if (manualGuestLimitInput) {
+  manualGuestLimitInput.addEventListener("input", clampManualGuestCount);
+}
+
+if (copySavedRsvpLinkBtn) {
+  copySavedRsvpLinkBtn.addEventListener("click", async () => {
+    const link = rsvpInviteLinkInput?.value;
+    if (!link) return;
+
+    try {
+      await navigator.clipboard.writeText(link);
+      copySavedRsvpLinkBtn.innerHTML = '<i class="fa-solid fa-check"></i> Copied';
+      setTimeout(() => {
+        copySavedRsvpLinkBtn.innerHTML = '<i class="fa-solid fa-copy"></i> Copy';
+      }, 1600);
+    } catch (error) {
+      window.prompt("Copy this RSVP link:", link);
+    }
+  });
+}
 
 const adminRsvpForm = document.getElementById("adminRsvpForm");
 if (adminRsvpForm) {
@@ -553,14 +599,21 @@ if (adminRsvpForm) {
     const firstName = document.getElementById("manualFirstName").value.trim();
     const lastName = document.getElementById("manualLastName").value.trim();
     const guestCount = parseInt(document.getElementById("manualGuestCount").value, 10);
+    const guestLimit = parseInt(document.getElementById("manualGuestLimit").value, 10);
     const attendance = document.querySelector("input[name='manualAttendance']:checked")?.value || "Pending";
     const isAccepted = attendance === "Attending";
+
+    const normalizedGuestLimit = Number.isInteger(guestLimit) && guestLimit > 0 ? Math.min(guestLimit, 20) : 1;
+    const normalizedGuestCount = isAccepted && Number.isInteger(guestCount) && guestCount > 0
+      ? Math.min(guestCount, normalizedGuestLimit)
+      : 0;
 
     let updatedGuest = {
       id: id || (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString()),
       firstName,
       lastName,
-      guestCount: isAccepted && Number.isInteger(guestCount) && guestCount > 0 ? guestCount : 0,
+      guestCount: normalizedGuestCount,
+      guestLimit: normalizedGuestLimit,
       email: "-",
       attendance,
       meal: "-",
@@ -578,9 +631,15 @@ if (adminRsvpForm) {
       rsvps = await window.WeddingSupabase.listRsvps() || [];
       renderOverview();
       renderRsvpTable(document.getElementById("rsvpSearch").value);
-      document.getElementById("rsvpModal").classList.remove("active");
-      if (!id) {
-        window.prompt("Send this RSVP link to the guest:", buildRsvpInviteLink(savedGuest.id));
+
+      const inviteLink = buildRsvpInviteLink(savedGuest.id);
+      document.getElementById("rsvpEditId").value = savedGuest.id;
+      document.getElementById("rsvpModalTitle").textContent = "Edit Guest RSVP";
+      if (rsvpInviteLinkInput) rsvpInviteLinkInput.value = inviteLink;
+      if (rsvpInviteLinkPanel) rsvpInviteLinkPanel.hidden = false;
+
+      if (id) {
+        document.getElementById("rsvpModal").classList.remove("active");
       }
     } catch (error) {
       console.error("RSVP save failed:", error);
@@ -616,6 +675,10 @@ function setupModals() {
           document.getElementById("manualPendingRadio").checked = true;
           document.getElementById("manualGuestCount").value = "0";
           document.getElementById("manualGuestCount").disabled = true;
+          document.getElementById("manualGuestLimit").value = "1";
+          document.getElementById("manualGuestCount").max = "1";
+          if (rsvpInviteLinkPanel) rsvpInviteLinkPanel.hidden = true;
+          if (rsvpInviteLinkInput) rsvpInviteLinkInput.value = "";
         }
         
         // Reset title

@@ -42,11 +42,13 @@ function databaseErrorResponse(error) {
 }
 
 function toRsvp(row) {
+  const guestLimit = Number.isInteger(Number(row.guest_limit)) ? Number(row.guest_limit) : 1;
   return {
     id: row.id,
     firstName: row.first_name,
     lastName: row.last_name,
     guestCount: Number.isInteger(Number(row.guest_count)) ? Number(row.guest_count) : 1,
+    guestLimit,
     email: row.email,
     attendance: row.attendance,
     meal: row.meal || "-",
@@ -64,6 +66,20 @@ function toRegistryItem(row) {
     desc: row.description,
     link: row.link
   };
+}
+
+function normalizeGuestLimit(value) {
+  const guestLimit = Number(value);
+  if (!Number.isInteger(guestLimit) || guestLimit < 1) return 1;
+  return Math.min(guestLimit, 20);
+}
+
+function normalizeGuestCount(value, guestLimit, attendance) {
+  if (attendance !== "Attending") return 0;
+
+  const guestCount = Number(value);
+  if (!Number.isInteger(guestCount) || guestCount < 1) return 1;
+  return Math.min(guestCount, guestLimit);
 }
 
 async function readBody(event) {
@@ -112,15 +128,19 @@ exports.handler = async function handler(event) {
 
     if (event.httpMethod === "POST" && action === "saveRsvp") {
       const { rsvp } = await readBody(event);
+      const attendance = rsvp.attendance || "Pending";
+      const guestLimit = normalizeGuestLimit(rsvp.guestLimit || rsvp.guestCount);
+      const guestCount = normalizeGuestCount(rsvp.guestCount, guestLimit, attendance);
       const result = await pool.query(
         `insert into public.rsvps
-         (id, first_name, last_name, guest_count, email, attendance, submitted_at)
+         (id, first_name, last_name, guest_count, guest_limit, email, attendance, submitted_at)
          values
-          (coalesce($1::uuid, gen_random_uuid()), $2, $3, $4, $5, $6, $7)
+          (coalesce($1::uuid, gen_random_uuid()), $2, $3, $4, $5, $6, $7, $8)
          on conflict (id) do update set
           first_name = excluded.first_name,
           last_name = excluded.last_name,
           guest_count = excluded.guest_count,
+          guest_limit = excluded.guest_limit,
           email = excluded.email,
           attendance = excluded.attendance,
           submitted_at = excluded.submitted_at
@@ -129,9 +149,10 @@ exports.handler = async function handler(event) {
           rsvp.id || null,
           rsvp.firstName,
           rsvp.lastName,
-          Number.isInteger(Number(rsvp.guestCount)) ? Number(rsvp.guestCount) : 1,
+          guestCount,
+          guestLimit,
           rsvp.email || "-",
-          rsvp.attendance || "Pending",
+          attendance,
           rsvp.timestamp || new Date().toISOString()
         ]
       );
