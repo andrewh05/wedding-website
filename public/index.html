@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Elie & Elissa's Wedding</title>
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Welcome to our wedding website! Here you'll find event details, our story, gift registry, and can RSVP online.">
+  <meta name="keywords" content="wedding, RSVP, wedding website, timeline, registry">
+  
+  <link rel="stylesheet" href="style.css?v=20260607-cloudflare-supabase">
+  
+  <!-- FontAwesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Floating Audio Player (Ambient Music) -->
+  <div class="music-badge" id="musicPlayerBtn" title="Play background music">
+    <div class="music-wave paused" id="musicWave">
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    <span class="music-text" id="musicStatusText">Play Music</span>
+  </div>
+  <audio id="bgAudio" loop preload="auto">
+    <!-- Royalty-free soft wedding background music (beautiful piano & acoustic) -->
+    <source src="./assets/music.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- Navigation -->
+  <header class="nav-header" id="navHeader">
+    <div class="nav-container">
+      <a href="#hero" class="nav-logo" id="navLogo">E & E</a>
+      <ul class="nav-menu" id="navMenu">
+        <li><a href="#hero" class="nav-link active" data-slide="0">Home</a></li>
+        <li><a href="#couple" class="nav-link" data-slide="1">Our Story</a></li>
+        <li><a href="#timeline" class="nav-link" data-slide="2">Timeline</a></li>
+        <li><a href="#registry" class="nav-link" data-slide="3">Registry</a></li>
+        <li><a href="#rsvp" class="nav-link" data-slide="4">RSVP</a></li>
+      </ul>
+      <div class="nav-mobile-toggle" id="navToggle">
+        <i class="fa-solid fa-bars"></i>
+      </div>
+    </div>
+  </header>
+
+  <!-- Swipe Presentation Wrapper -->
+  <div class="swipe-container">
+    <div class="swipe-wrapper" id="swipeWrapper">
+      
+      <!-- Slide 1: Hero Cover Section -->
+      <section class="swipe-slide hero" id="hero">
+        <div class="hero-bg" id="heroBg" style="background-image: url('./assets/hero_bg.jpeg');"></div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+          <span class="hero-cursive" id="heroSubtitle">Save the Date</span>
+          <h1 class="hero-title" id="heroTitle">Elie & Elissa</h1>
+          <p class="hero-verse">
+            <span>Mark 10:8</span>
+            "And the two will become one flesh. So they are no longer two, but one flesh."
+          </p>
+          <p class="hero-details" id="heroMeta">August 1, 2026 &bull; Andaket, Akkar</p>
+          
+          <!-- Countdown -->
+          <div class="countdown-container" id="countdown">
+            <div class="countdown-box">
+              <span class="countdown-number" id="days">00</span>
+              <span class="countdown-label">Days</span>
+            </div>
+            <div class="countdown-box">
+              <span class="countdown-number" id="hours">00</span>
+              <span class="countdown-label">Hours</span>
+            </div>
+            <div class="countdown-box">
+              <span class="countdown-number" id="minutes">00</span>
+              <span class="countdown-label">Mins</span>
+            </div>
+            <div class="countdown-box">
+              <span class="countdown-number" id="seconds">00</span>
+              <span class="countdown-label">Secs</span>
+            </div>
+          </div>
+          
+          <div style="margin-top: 3rem;">
+            <button class="btn btn-primary" onclick="goToSlide(4)">RSVP Online</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 2: Couple Bio Section -->
+      <section class="swipe-slide" id="couple">
+        <div class="section-header" style="margin-bottom: 2rem;">
+          <span class="section-subtitle">Meet the Happy Couple</span>
+          <h2 class="section-title">The Bride & Groom</h2>
+        </div>
+        
+        <div class="couple-grid" style="width: 100%; max-width: 1100px;">
+          <!-- Bride Card -->
+          <div class="couple-card glass-panel" id="brideCard">
+            <img class="couple-avatar" id="brideAvatar" src="./assets/bride.png" alt="Bride">
+            <h3 class="couple-name" id="brideName">Elissa Massoud</h3>
+            <span class="couple-role">The Bride</span>
+            <p class="couple-bio" id="brideBio"></p>
+          </div>
+          
+          <!-- Elegant Cursive Divider -->
+          <div class="couple-divider">&</div>
+          
+          <!-- Groom Card -->
+          <div class="couple-card glass-panel" id="groomCard">
+            <img class="couple-avatar" id="groomAvatar" src="./assets/groom.jpeg" alt="Groom">
+            <h3 class="couple-name" id="groomName">Elie Rakwe</h3>
+            <span class="couple-role">The Groom</span>
+            <p class="couple-bio" id="groomBio"></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 3: Wedding Schedule Timeline -->
+      <section class="swipe-slide" id="timeline">
+        <div class="section-header" style="margin-bottom: 2rem;">
+          <span class="section-subtitle">Our Big Day</span>
+          <h2 class="section-title">Wedding Schedule</h2>
+        </div>
+        
+        <div class="timeline-container" style="width: 100%; max-width: 800px;">
+          <div class="timeline-line"></div>
+          <div id="timelineEventsContainer">
+            <!-- Rendered dynamically by script.js -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 4: Gift Registry Section -->
+      <section class="swipe-slide" id="registry">
+        <div class="registry-page">
+          <div class="registry-gift-panel">
+            <h2 class="registry-script-title">Gifts</h2>
+            <img class="registry-gift-image" src="./assets/gift-angel.jpeg" alt="Angel holding a gift">
+            <p class="registry-note">
+              Having you with us to celebrate is already the greatest gift we could receive.
+            </p>
+            <p class="registry-note">
+              If you'd like to contribute further, we've included our registry below.
+            </p>
+            <div class="registry-account">
+              <p>Whish Account: Elie &amp; Elissa</p>
+              <p>Phone Number: +961 76420833</p>
+            </div>
+            <p class="registry-thanks">
+              Thank you for your love and for sharing in this unforgettable time!<br>
+              We feel incredibly fortunate.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 5: RSVP Section -->
+      <section class="swipe-slide" id="rsvp">
+        <div class="section-header" style="margin-bottom: 1.5rem;">
+          <span class="section-subtitle">Be Our Guest</span>
+          <h2 class="section-title">Kindly RSVP</h2>
+        </div>
+        
+        <div class="rsvp-container glass-panel">
+          <form id="rsvpForm" novalidate>
+            <div class="form-group-row">
+              <div class="form-group">
+                <label for="guestFirstName" class="form-label">First Name</label>
+                <input type="text" id="guestFirstName" class="form-input" placeholder="e.g. Elissa" required>
+              </div>
+              <div class="form-group">
+                <label for="guestLastName" class="form-label">Last Name</label>
+                <input type="text" id="guestLastName" class="form-input" placeholder="e.g. Massoud" required>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Will you be attending?</label>
+              <div class="radio-group rsvp-choice-group">
+                <label class="radio-label rsvp-choice">
+                  <input type="radio" name="attendance" value="accepted" checked>
+                  Accept
+                </label>
+                <label class="radio-label rsvp-choice">
+                  <input type="radio" name="attendance" value="rejected">
+                  Reject
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="guestCount" class="form-label">How many guests are coming?</label>
+              <input type="number" id="guestCount" class="form-input" min="1" max="20" value="1" required>
+              <p class="guest-limit-note" id="guestLimitNote"></p>
+            </div>
+            
+            <div style="text-align: center; margin-top: 1.5rem;">
+              <button type="submit" class="btn btn-primary" style="width: 100%;">Submit RSVP Response</button>
+            </div>
+            
+            <!-- Alerts -->
+            <div class="rsvp-alert success" id="rsvpSuccessAlert">
+              Thank you! Your RSVP response has been successfully recorded.
+            </div>
+            <div class="rsvp-alert error" id="rsvpErrorAlert">
+              Please fill out all the required fields correctly.
+            </div>
+          </form>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- Swipe Navigation Arrows -->
+  <button class="swipe-arrow prev-arrow" id="prevSlideBtn" title="Previous section">
+    <i class="fa-solid fa-chevron-left"></i>
+  </button>
+  <button class="swipe-arrow next-arrow" id="nextSlideBtn" title="Next section">
+    <i class="fa-solid fa-chevron-right"></i>
+  </button>
+
+  <!-- Swipe Pagination Indicator Dots -->
+  <div class="swipe-pagination" id="swipePagination">
+    <span class="pagination-dot active" data-slide="0" title="Home"></span>
+    <span class="pagination-dot" data-slide="1" title="Our Story"></span>
+    <span class="pagination-dot" data-slide="2" title="Timeline"></span>
+    <span class="pagination-dot" data-slide="3" title="Registry"></span>
+    <span class="pagination-dot" data-slide="4" title="RSVP"></span>
+  </div>
+
+  <!-- Floating Admin Panel Trigger Cog -->
+  <a href="dashboard.html" class="admin-badge" id="adminBadge" title="Open Admin Customizer Dashboard">
+    <i class="fa-solid fa-sliders" style="font-size: 1.25rem;"></i>
+  </a>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js?v=20260607-cloudflare-supabase"></script>
+  <script src="supabase-api.js?v=20260607-cloudflare-supabase"></script>
+  <script src="script.js?v=20260607-cloudflare-supabase"></script>
+</body>
+</html>

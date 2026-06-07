@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wedding Admin Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- FontAwesome for Dashboard Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="admin-body">
+
+  <!-- Admin Sidebar -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <i class="fa-solid fa-bell-concierge"></i>
+        <span>Wedding</span>Hub
+      </div>
+      <div class="sidebar-subtitle">Admin Control Panel</div>
+    </div>
+    
+    <ul class="sidebar-menu">
+      <li>
+        <button class="sidebar-item-btn active" data-tab="overview">
+          <i class="fa-solid fa-chart-pie"></i> Overview
+        </button>
+      </li>
+      <li>
+        <button class="sidebar-item-btn" data-tab="rsvps">
+          <i class="fa-solid fa-users"></i> RSVP Manager
+        </button>
+      </li>
+      <li>
+        <button class="sidebar-item-btn" data-tab="registry-editor">
+          <i class="fa-solid fa-gift"></i> Gift Registry
+        </button>
+      </li>
+    </ul>
+    
+    <div class="sidebar-footer">
+      <a href="index.html" class="sidebar-item-btn" style="text-align: center; justify-content: center; background-color: rgba(255,255,255,0.05);">
+        <i class="fa-solid fa-arrow-left"></i> View Live Site
+      </a>
+    </div>
+  </aside>
+
+  <!-- Admin Main Workspace -->
+  <main class="admin-main">
+    
+    <!-- Topbar -->
+    <header class="admin-topbar">
+      <div class="admin-title" id="tabTitle">Overview & Analytics</div>
+      <a href="index.html" target="_blank" class="admin-view-site">
+        <i class="fa-solid fa-up-right-from-square"></i> Open Live Preview in New Tab
+      </a>
+    </header>
+    
+    <!-- Dynamic Panel Views -->
+    <div class="admin-content">
+      
+      <!-- 1. OVERVIEW TAB PANEL -->
+      <section class="tab-pane active" id="overview">
+        <!-- Analytics summary blocks -->
+        <div class="analytics-grid">
+          <div class="stat-card">
+            <span class="stat-label">Total RSVPs</span>
+            <div class="stat-value" id="statTotalRsvp">0</div>
+            <div class="stat-meta">Responses received</div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Accepted</span>
+            <div class="stat-value" id="statAttending" style="color: #2ecc71;">0</div>
+            <div class="stat-meta">RSVPs accepted</div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Rejected</span>
+            <div class="stat-value" id="statDeclined" style="color: #e74c3c;">0</div>
+            <div class="stat-meta">RSVPs rejected</div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Days to Big Day</span>
+            <div class="stat-value" id="statDaysToWedding">0</div>
+            <div class="stat-meta">Countdown tracking</div>
+          </div>
+        </div>
+        
+        <div class="analytics-row">
+          <div class="panel-card">
+            <h3 class="panel-title">Guest Count Breakdown</h3>
+            <div class="meal-list" id="mealBreakdownContainer">
+              <!-- Populated dynamically via JS -->
+            </div>
+          </div>
+          
+          <div class="panel-card">
+            <h3 class="panel-title">Recent RSVPs</h3>
+            <div id="quickOverviewList" style="max-height: 200px; overflow-y: auto; font-size: 0.85rem; line-height: 1.6;">
+              <!-- Populated dynamically via JS -->
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- 2. RSVPS MANAGEMENT TAB PANEL -->
+      <section class="tab-pane" id="rsvps">
+        <div class="panel-card" style="padding: 2rem;">
+          <div class="table-actions">
+            <!-- Search & Filters -->
+            <div class="search-box">
+              <i class="fa-solid fa-magnifying-glass search-icon"></i>
+              <input type="text" id="rsvpSearch" class="search-input" placeholder="Search guests by name...">
+            </div>
+            
+            <!-- Quick manual entry & export buttons -->
+            <div class="action-buttons">
+              <button class="admin-btn admin-btn-secondary" id="exportCsvBtn">
+                <i class="fa-solid fa-file-csv"></i> Export CSV
+              </button>
+              <button class="admin-btn admin-btn-primary" id="openAddGuestModalBtn">
+                <i class="fa-solid fa-plus"></i> Add Guest RSVP
+              </button>
+            </div>
+          </div>
+          
+          <div class="table-container">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Guest Name</th>
+                  <th>Status</th>
+                  <th>Guests Coming</th>
+                  <th>Guest Limit</th>
+                  <th>Submitted</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="rsvpTableBody">
+                <!-- Dynamically populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      
+      <!-- 3. REGISTRY CRUD TAB PANEL -->
+      <section class="tab-pane" id="registry-editor">
+        <div class="panel-card" style="max-width: 800px; margin: 0 auto;">
+          <div class="table-actions">
+            <h3 class="panel-title" style="margin-bottom:0;">Gift Registry Cards</h3>
+            <button class="admin-btn admin-btn-primary" id="openAddRegistryModalBtn">
+              <i class="fa-solid fa-plus"></i> Add Gift Item
+            </button>
+          </div>
+          <div class="crud-list" id="registryCrudList">
+            <!-- Dynamically populated via JS -->
+          </div>
+        </div>
+      </section>
+      
+    </div>
+  </main>
+
+  <!-- ADD / EDIT MANUAL GUEST RSVP DIALOG MODAL -->
+  <div class="modal-overlay" id="rsvpModal">
+    <div class="modal-box">
+      <h3 class="modal-title" id="rsvpModalTitle">Add Guest RSVP Manually</h3>
+      <form id="adminRsvpForm">
+        <input type="hidden" id="rsvpEditId" value="">
+        <div class="form-group-row">
+          <div class="form-group">
+            <label class="form-label" for="manualFirstName">First Name</label>
+            <input type="text" id="manualFirstName" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="manualLastName">Last Name</label>
+            <input type="text" id="manualLastName" class="form-input" required>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">RSVP Status</label>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="manualAttendance" id="manualPendingRadio" value="Pending" checked>
+              Pending
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="manualAttendance" id="manualAcceptedRadio" value="Attending">
+              Accepted
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="manualAttendance" id="manualRejectedRadio" value="Not Attending">
+              Rejected
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="manualGuestCount">Guests Coming</label>
+          <input type="number" id="manualGuestCount" class="form-input" min="1" max="20" value="1" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="manualGuestLimit">Guest Limit for Invite Link</label>
+          <input type="number" id="manualGuestLimit" class="form-input" min="1" max="20" value="1" required>
+        </div>
+
+        <div class="invite-link-panel" id="rsvpInviteLinkPanel" hidden>
+          <label class="form-label" for="rsvpInviteLinkInput">Invite Link</label>
+          <div class="invite-link-row">
+            <input type="text" id="rsvpInviteLinkInput" class="form-input" readonly>
+            <button type="button" class="admin-btn admin-btn-primary" id="copySavedRsvpLinkBtn">
+              <i class="fa-solid fa-copy"></i> Copy
+            </button>
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="closeRsvpModalBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save RSVP</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADD / EDIT REGISTRY ITEM MODAL -->
+  <div class="modal-overlay" id="registryModal">
+    <div class="modal-box">
+      <h3 class="modal-title" id="registryModalTitle">Add Gift Item / Registry Card</h3>
+      <form id="adminRegistryForm">
+        <input type="hidden" id="registryEditIndex" value="">
+        <div class="form-group">
+          <label class="form-label" for="registrySite">Store/Site Name (e.g. Amazon, Target)</label>
+          <input type="text" id="registrySite" class="form-input" required placeholder="e.g. Honeyfund">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="registryTitle">Item/Goal Name</label>
+          <input type="text" id="registryTitle" class="form-input" required placeholder="e.g. European Travel Fund">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="registryDesc">Short Description</label>
+          <textarea id="registryDesc" class="form-input" required rows="2" placeholder="Helpful details for your guests..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="registryLink">Registry Web Address Link (URL)</label>
+          <input type="text" id="registryLink" class="form-input" placeholder="e.g. https://amazon.com/registry/..." value="#">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="closeRegistryModalBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Gift Item</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="supabase-api.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>
