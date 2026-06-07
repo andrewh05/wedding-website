@@ -853,6 +853,62 @@ if (musicPlayerBtn && bgAudio) {
   });
 }
 
+// --- ADMIN DASHBOARD ACCESS POPUP ---
+const adminBadge = document.getElementById("adminBadge");
+const adminModal = document.getElementById("adminModal");
+const adminModalBackdrop = document.getElementById("adminModalBackdrop");
+const adminModalClose = document.getElementById("adminModalClose");
+const adminSignupForm = document.getElementById("adminSignupForm");
+const adminUsernameInput = document.getElementById("adminUsername");
+const adminPasswordInput = document.getElementById("adminPassword");
+const adminLoginError = document.getElementById("adminLoginError");
+const ADMIN_USERNAME = "Elie&Elissa";
+const ADMIN_PASSWORD = "P@ssword";
+
+if (adminBadge && adminModal && adminSignupForm) {
+  const openAdminModal = () => {
+    adminModal.classList.add("open");
+    adminModal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    setTimeout(() => adminUsernameInput?.focus(), 0);
+  };
+
+  const closeAdminModal = () => {
+    adminModal.classList.remove("open");
+    adminModal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  };
+
+  adminBadge.addEventListener("click", (event) => {
+    event.preventDefault();
+    openAdminModal();
+  });
+
+  adminModalBackdrop?.addEventListener("click", closeAdminModal);
+  adminModalClose?.addEventListener("click", closeAdminModal);
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && adminModal.classList.contains("open")) {
+      closeAdminModal();
+    }
+  });
+
+  adminSignupForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const username = adminUsernameInput?.value.trim() || "";
+    const password = adminPasswordInput?.value || "";
+
+    if (username !== ADMIN_USERNAME || password !== ADMIN_PASSWORD) {
+      adminLoginError?.classList.add("visible");
+      adminPasswordInput?.focus();
+      return;
+    }
+
+    adminLoginError?.classList.remove("visible");
+    window.location.href = adminBadge.getAttribute("href") || "dashboard.html";
+  });
+}
+
 // --- LIVE EDITING STORAGE LISTENER ---
 // Listens for updates from Dashboard to update UI themes and texts instantly
 window.addEventListener("storage", (e) => {
