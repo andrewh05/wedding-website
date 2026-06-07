@@ -41,17 +41,22 @@
   }
 
   function toRsvpRow(rsvp) {
-    const guestLimit = Number.isInteger(Number(rsvp.guestLimit)) ? Number(rsvp.guestLimit) : 1;
     const attendance = rsvp.attendance || "Pending";
+    const requestedGuestCount = Number.isInteger(Number(rsvp.guestCount)) ? Number(rsvp.guestCount) : 1;
+    const guestLimit = Math.max(
+      Number.isInteger(Number(rsvp.guestLimit)) ? Number(rsvp.guestLimit) : 1,
+      attendance === "Attending" ? requestedGuestCount : 1
+    );
     const guestCount = attendance === "Attending" && Number.isInteger(Number(rsvp.guestCount))
       ? Math.min(Math.max(Number(rsvp.guestCount), 1), guestLimit)
       : 0;
 
-    const row = {
+    return {
       id: rsvp.id || crypto.randomUUID(),
       first_name: rsvp.firstName,
       last_name: rsvp.lastName,
       guest_count: guestCount,
+      guest_limit: guestLimit,
       email: rsvp.email,
       attendance,
       meal: rsvp.meal || "-",
@@ -59,24 +64,24 @@
       song: rsvp.song || "-",
       submitted_at: rsvp.timestamp || new Date().toISOString()
     };
-
-    if (!rsvp.preserveGuestLimit) {
-      row.guest_limit = guestLimit;
-    }
-
-    return row;
   }
 
   function fromRsvpRow(row) {
-    const guestLimit = Number.isInteger(Number(row.guest_limit)) ? Number(row.guest_limit) : 1;
+    const attendance = row.attendance;
+    const guestCount = Number.isInteger(Number(row.guest_count)) ? Number(row.guest_count) : 0;
+    const guestLimit = Math.max(
+      Number.isInteger(Number(row.guest_limit)) ? Number(row.guest_limit) : 1,
+      attendance === "Attending" ? guestCount : 1
+    );
+
     return {
       id: row.id,
       firstName: row.first_name,
       lastName: row.last_name,
-      guestCount: Number.isInteger(Number(row.guest_count)) ? Number(row.guest_count) : 1,
+      guestCount,
       guestLimit,
       email: row.email,
-      attendance: row.attendance,
+      attendance,
       meal: row.meal,
       dietary: row.dietary,
       song: row.song,

@@ -138,7 +138,7 @@ async function initData() {
       }
 
       config.registry = remoteRegistry || [];
-      rsvps = remoteRsvps || [];
+      rsvps = await repairRsvpGuestLimits(remoteRsvps || []);
       return;
     } catch (error) {
       console.error("Supabase dashboard load failed:", error);
@@ -146,6 +146,33 @@ async function initData() {
   } else {
     console.warn("Supabase is not configured. Dashboard database data cannot be loaded.");
   }
+}
+
+async function repairRsvpGuestLimits(nextRsvps) {
+  const repairedRsvps = [];
+
+  for (const rsvp of nextRsvps) {
+    const guestCount = Number(rsvp.guestCount) || 0;
+    const guestLimit = Number(rsvp.guestLimit) || 1;
+
+    if (rsvp.attendance === "Attending" && guestCount > guestLimit) {
+      const repaired = {
+        ...rsvp,
+        guestLimit: guestCount
+      };
+
+      try {
+        repairedRsvps.push(await window.WeddingSupabase.saveRsvp(repaired));
+      } catch (error) {
+        console.error("RSVP guest limit repair failed:", error);
+        repairedRsvps.push(repaired);
+      }
+    } else {
+      repairedRsvps.push(rsvp);
+    }
+  }
+
+  return repairedRsvps;
 }
 
 async function reloadDashboardData() {

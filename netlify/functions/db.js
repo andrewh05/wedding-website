@@ -42,15 +42,21 @@ function databaseErrorResponse(error) {
 }
 
 function toRsvp(row) {
-  const guestLimit = Number.isInteger(Number(row.guest_limit)) ? Number(row.guest_limit) : 1;
+  const attendance = row.attendance;
+  const guestCount = Number.isInteger(Number(row.guest_count)) ? Number(row.guest_count) : 0;
+  const guestLimit = Math.max(
+    Number.isInteger(Number(row.guest_limit)) ? Number(row.guest_limit) : 1,
+    attendance === "Attending" ? guestCount : 1
+  );
+
   return {
     id: row.id,
     firstName: row.first_name,
     lastName: row.last_name,
-    guestCount: Number.isInteger(Number(row.guest_count)) ? Number(row.guest_count) : 1,
+    guestCount,
     guestLimit,
     email: row.email,
-    attendance: row.attendance,
+    attendance,
     meal: row.meal || "-",
     dietary: row.dietary || "-",
     song: row.song || "-",
@@ -72,6 +78,12 @@ function normalizeGuestLimit(value) {
   const guestLimit = Number(value);
   if (!Number.isInteger(guestLimit) || guestLimit < 1) return 1;
   return Math.min(guestLimit, 20);
+}
+
+function normalizeGuestLimitForCount(value, guestCount, attendance) {
+  const guestLimit = normalizeGuestLimit(value);
+  if (attendance !== "Attending") return guestLimit;
+  return Math.max(guestLimit, guestCount);
 }
 
 function normalizeGuestCount(value, guestLimit, attendance) {
@@ -139,6 +151,7 @@ exports.handler = async function handler(event) {
       }
 
       const guestCount = normalizeGuestCount(rsvp.guestCount, guestLimit, attendance);
+      guestLimit = normalizeGuestLimitForCount(guestLimit, guestCount, attendance);
       const result = await pool.query(
         `insert into public.rsvps
          (id, first_name, last_name, guest_count, guest_limit, email, attendance, submitted_at)
@@ -148,7 +161,10 @@ exports.handler = async function handler(event) {
           first_name = excluded.first_name,
           last_name = excluded.last_name,
           guest_count = excluded.guest_count,
-          guest_limit = case when $9 then public.rsvps.guest_limit else excluded.guest_limit end,
+          guest_limit = case
+            when $9 then greatest(public.rsvps.guest_limit, excluded.guest_count)
+            else excluded.guest_limit
+          end,
           email = excluded.email,
           attendance = excluded.attendance,
           submitted_at = excluded.submitted_at
