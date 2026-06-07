@@ -791,28 +791,42 @@ const musicStatusText = document.getElementById("musicStatusText");
 const bgAudio = document.getElementById("bgAudio");
 
 if (musicPlayerBtn && bgAudio) {
+  const setMusicState = (isPlaying, label) => {
+    musicWave.classList.toggle("paused", !isPlaying);
+    musicStatusText.textContent = label || (isPlaying ? "Mute Music" : "Play Music");
+  };
+
+  const playMusic = () => bgAudio.play().then(() => {
+    setMusicState(true);
+    return true;
+  }).catch((err) => {
+    console.warn("Music autoplay blocked:", err);
+    setMusicState(false, "Tap Music");
+    return false;
+  });
+
+  const unlockAutoplay = () => {
+    if (!bgAudio.paused) return;
+    playMusic();
+  };
+
   bgAudio.addEventListener("error", () => {
-    musicWave.classList.add("paused");
-    musicStatusText.textContent = "Music Error";
+    setMusicState(false, "Music Error");
   });
 
   musicPlayerBtn.addEventListener("click", () => {
     if (bgAudio.paused) {
-      // Browser autoplay policy might block first load without click
-      bgAudio.play().then(() => {
-        musicWave.classList.remove("paused");
-        musicStatusText.textContent = "Mute Music";
-      }).catch(err => {
-        console.error("Playback error:", err);
-        musicWave.classList.add("paused");
-        musicStatusText.textContent = "Tap Again";
-      });
+      playMusic();
     } else {
       bgAudio.pause();
-      musicWave.classList.add("paused");
-      musicStatusText.textContent = "Play Music";
+      setMusicState(false);
     }
   });
+
+  setMusicState(false, "Starting Music");
+  playMusic();
+  window.addEventListener("pointerdown", unlockAutoplay, { once: true });
+  window.addEventListener("keydown", unlockAutoplay, { once: true });
 }
 
 // --- LIVE EDITING STORAGE LISTENER ---
