@@ -347,15 +347,23 @@ function getRsvpBadgeClass(attendance) {
   return "badge-pending";
 }
 
-function buildRsvpInviteLink(id) {
+function normalizeInviteGuestLimit(value) {
+  const guestLimit = Number(value);
+  if (!Number.isInteger(guestLimit) || guestLimit < 1) return 1;
+  return Math.min(guestLimit, 20);
+}
+
+function buildRsvpInviteLink(id, guestLimit = 1) {
   const baseUrl = new URL("index.html", window.location.href);
   baseUrl.searchParams.set("rsvp", id);
+  baseUrl.searchParams.set("limit", normalizeInviteGuestLimit(guestLimit));
   baseUrl.hash = "rsvp";
   return baseUrl.toString();
 }
 
 window.copyRsvpInviteLink = async function(id) {
-  const link = buildRsvpInviteLink(id);
+  const guest = rsvps.find(r => r.id === id);
+  const link = buildRsvpInviteLink(id, guest?.guestLimit || 1);
   try {
     await navigator.clipboard.writeText(link);
     alert("RSVP link copied.");
@@ -532,7 +540,7 @@ window.editRsvpManual = function(id) {
   document.getElementById("manualGuestLimit").value = guest.guestLimit || 1;
   clampManualGuestCount();
 
-  if (rsvpInviteLinkInput) rsvpInviteLinkInput.value = buildRsvpInviteLink(guest.id);
+  if (rsvpInviteLinkInput) rsvpInviteLinkInput.value = buildRsvpInviteLink(guest.id, guest.guestLimit || 1);
   if (rsvpInviteLinkPanel) rsvpInviteLinkPanel.hidden = false;
 
   document.getElementById("rsvpModalTitle").textContent = "Edit Guest RSVP";
@@ -632,7 +640,7 @@ if (adminRsvpForm) {
       renderOverview();
       renderRsvpTable(document.getElementById("rsvpSearch").value);
 
-      const inviteLink = buildRsvpInviteLink(savedGuest.id);
+      const inviteLink = buildRsvpInviteLink(savedGuest.id, savedGuest.guestLimit || normalizedGuestLimit);
       document.getElementById("rsvpEditId").value = savedGuest.id;
       document.getElementById("rsvpModalTitle").textContent = "Edit Guest RSVP";
       if (rsvpInviteLinkInput) rsvpInviteLinkInput.value = inviteLink;

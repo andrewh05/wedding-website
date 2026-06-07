@@ -161,10 +161,19 @@ const THEME_PRESETS = {
 let currentConfig = cloneDefaultConfig();
 let activeRsvpInvite = null;
 
-function getActiveGuestLimit() {
-  const guestLimit = Number(activeRsvpInvite?.guestLimit);
-  if (!Number.isInteger(guestLimit) || guestLimit < 1) return 20;
+function normalizeGuestLimit(value, fallback = 20) {
+  const guestLimit = Number(value);
+  if (!Number.isInteger(guestLimit) || guestLimit < 1) return fallback;
   return Math.min(guestLimit, 20);
+}
+
+function getInviteLimitFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  return normalizeGuestLimit(params.get("limit"), null);
+}
+
+function getActiveGuestLimit() {
+  return normalizeGuestLimit(activeRsvpInvite?.guestLimit, 20);
 }
 
 function updateGuestLimitDisplay() {
@@ -174,6 +183,10 @@ function updateGuestLimitDisplay() {
 
   if (guestInput) {
     guestInput.max = String(guestLimit);
+    const guestCount = Number(guestInput.value);
+    if (!guestInput.disabled && Number.isInteger(guestCount) && guestCount > guestLimit) {
+      guestInput.value = String(guestLimit);
+    }
   }
 
   if (limitNote) {
@@ -242,13 +255,28 @@ async function loadConfiguration() {
 
 async function loadRsvpInvite() {
   const inviteId = new URLSearchParams(window.location.search).get("rsvp");
-  if (!inviteId || !window.WeddingSupabase?.isEnabled()) return;
+  if (!inviteId) return;
+
+  const urlGuestLimit = getInviteLimitFromUrl();
+  if (urlGuestLimit) {
+    activeRsvpInvite = {
+      id: inviteId,
+      guestLimit: urlGuestLimit
+    };
+    updateGuestLimitDisplay();
+    goToSlide(slides.indexOf("rsvp"));
+  }
+
+  if (!window.WeddingSupabase?.isEnabled()) return;
 
   try {
     const invite = await window.WeddingSupabase.getRsvp(inviteId);
     if (!invite) return;
 
-    activeRsvpInvite = invite;
+    activeRsvpInvite = {
+      ...invite,
+      guestLimit: urlGuestLimit || normalizeGuestLimit(invite.guestLimit, 20)
+    };
     const firstNameInput = document.getElementById("guestFirstName");
     const lastNameInput = document.getElementById("guestLastName");
 
@@ -262,7 +290,7 @@ async function loadRsvpInvite() {
     }
 
     const isRejected = invite.attendance === "Not Attending";
-    const inviteLimit = Number.isInteger(Number(invite.guestLimit)) ? Number(invite.guestLimit) : 1;
+    const inviteLimit = getActiveGuestLimit();
     const acceptedRadio = document.querySelector("input[name='attendance'][value='accepted']");
     const rejectedRadio = document.querySelector("input[name='attendance'][value='rejected']");
     if (acceptedRadio) acceptedRadio.checked = !isRejected;
@@ -617,6 +645,17 @@ const rsvpErrorAlert = document.getElementById("rsvpErrorAlert");
 const guestCountInput = document.getElementById("guestCount");
 const attendanceRadios = document.querySelectorAll("input[name='attendance']");
 
+if (guestCountInput) {
+  guestCountInput.addEventListener("input", () => {
+    const guestLimit = getActiveGuestLimit();
+    const guestCount = Number(guestCountInput.value);
+
+    if (Number.isInteger(guestCount) && guestCount > guestLimit) {
+      guestCountInput.value = String(guestLimit);
+    }
+  });
+}
+
 attendanceRadios.forEach((radio) => {
   radio.addEventListener("change", () => {
     const isRejected = document.querySelector("input[name='attendance']:checked")?.value === "rejected";
@@ -649,7 +688,8 @@ if (rsvpForm) {
       firstName,
       lastName,
       guestCount: isAccepted ? guestCount : 0,
-      guestLimit,
+      guestLimit: activeRsvpInvite?.guestLimit || guestLimit,
+      preserveGuestLimit: Boolean(activeRsvpInvite),
       email: "-",
       attendance: isAccepted ? "Attending" : "Not Attending",
       meal: "-",

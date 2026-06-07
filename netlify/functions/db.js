@@ -129,7 +129,15 @@ exports.handler = async function handler(event) {
     if (event.httpMethod === "POST" && action === "saveRsvp") {
       const { rsvp } = await readBody(event);
       const attendance = rsvp.attendance || "Pending";
-      const guestLimit = normalizeGuestLimit(rsvp.guestLimit || rsvp.guestCount);
+      let guestLimit = normalizeGuestLimit(rsvp.guestLimit || rsvp.guestCount);
+
+      if (rsvp.preserveGuestLimit && rsvp.id) {
+        const existing = await pool.query("select guest_limit from public.rsvps where id = $1 limit 1", [rsvp.id]);
+        if (existing.rows[0]) {
+          guestLimit = normalizeGuestLimit(existing.rows[0].guest_limit);
+        }
+      }
+
       const guestCount = normalizeGuestCount(rsvp.guestCount, guestLimit, attendance);
       const result = await pool.query(
         `insert into public.rsvps
@@ -140,7 +148,7 @@ exports.handler = async function handler(event) {
           first_name = excluded.first_name,
           last_name = excluded.last_name,
           guest_count = excluded.guest_count,
-          guest_limit = excluded.guest_limit,
+          guest_limit = case when $9 then public.rsvps.guest_limit else excluded.guest_limit end,
           email = excluded.email,
           attendance = excluded.attendance,
           submitted_at = excluded.submitted_at
@@ -153,7 +161,8 @@ exports.handler = async function handler(event) {
           guestLimit,
           rsvp.email || "-",
           attendance,
-          rsvp.timestamp || new Date().toISOString()
+          rsvp.timestamp || new Date().toISOString(),
+          Boolean(rsvp.preserveGuestLimit)
         ]
       );
       return json(200, { data: toRsvp(result.rows[0]) });

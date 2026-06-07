@@ -47,12 +47,11 @@
       ? Math.min(Math.max(Number(rsvp.guestCount), 1), guestLimit)
       : 0;
 
-    return {
+    const row = {
       id: rsvp.id || crypto.randomUUID(),
       first_name: rsvp.firstName,
       last_name: rsvp.lastName,
       guest_count: guestCount,
-      guest_limit: guestLimit,
       email: rsvp.email,
       attendance,
       meal: rsvp.meal || "-",
@@ -60,6 +59,12 @@
       song: rsvp.song || "-",
       submitted_at: rsvp.timestamp || new Date().toISOString()
     };
+
+    if (!rsvp.preserveGuestLimit) {
+      row.guest_limit = guestLimit;
+    }
+
+    return row;
   }
 
   function fromRsvpRow(row) {
