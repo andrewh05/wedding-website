@@ -1780,6 +1780,10 @@ footer {
     gap: 0.55rem;
   }
 
+  body.rsvp-active .swipe-pagination {
+    display: none;
+  }
+
   .pagination-dot {
     width: 10px;
     height: 10px;

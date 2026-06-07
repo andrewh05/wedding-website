@@ -475,11 +475,10 @@ let currentSlideIndex = 0;
 
 function alignSliderToCurrentSlide() {
   const wrapper = document.getElementById("swipeWrapper");
-  const targetSlide = document.getElementById(slides[currentSlideIndex]);
-  if (!wrapper || !targetSlide) return;
+  if (!wrapper) return;
 
   wrapper.style.width = `${slides.length * 100}vw`;
-  wrapper.style.transform = `translateX(-${targetSlide.offsetLeft}px)`;
+  wrapper.style.transform = `translate3d(-${currentSlideIndex * 100}vw, 0, 0)`;
 
   // Reset scroll offset on container/window to prevent browser native scroll double-shifting
   const container = document.querySelector(".swipe-container");
@@ -536,6 +535,7 @@ function goToSlide(index) {
   if (nextBtn) nextBtn.style.display = index === slides.length - 1 ? "none" : "flex";
 
   document.body.classList.toggle("registry-active", slides[index] === "registry");
+  document.body.classList.toggle("rsvp-active", slides[index] === "rsvp");
 
   // Seamlessly add scrolled styling to navbar if not on Home hero screen
   const header = document.getElementById("navHeader");
