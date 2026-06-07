@@ -1,0 +1,49 @@
+const fs = require("fs");
+const path = require("path");
+
+function loadEnvFile(filePath) {
+  if (!fs.existsSync(filePath)) return;
+  const lines = fs.readFileSync(filePath, "utf8").split(/\r?\n/);
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const separatorIndex = trimmed.indexOf("=");
+    if (separatorIndex === -1) continue;
+    const key = trimmed.slice(0, separatorIndex).trim();
+    let value = trimmed.slice(separatorIndex + 1).trim();
+    if (
+      (value.startsWith("\"") && value.endsWith("\"")) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    process.env[key] = value;
+  }
+}
+
+loadEnvFile("/home/andrew/Desktop/wedding website/.env");
+
+const { handler } = require("./netlify/functions/db");
+
+async function main() {
+  const event = {
+    httpMethod: "POST",
+    queryStringParameters: { action: "saveRsvp" },
+    body: JSON.stringify({
+      rsvp: {
+        id: "0ccb45a9-90c4-4964-bfc5-bad2881323f0",
+        firstName: "test",
+        lastName: "u",
+        guestCount: 2,
+        guestLimit: 3,
+        preserveGuestLimit: true,
+        attendance: "Attending"
+      }
+    })
+  };
+
+  const response = await handler(event);
+  console.log(response);
+}
+
+main();
