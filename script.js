@@ -304,6 +304,7 @@ async function loadRsvpInvite() {
     }
 
     goToSlide(slides.indexOf("rsvp"));
+    scheduleSliderAlignment();
   } catch (error) {
     console.error("RSVP invitation load failed:", error);
   }
@@ -464,6 +465,30 @@ function startCountdown(targetDateString) {
 const slides = ["hero", "couple", "timeline", "registry", "rsvp"];
 let currentSlideIndex = 0;
 
+function alignSliderToCurrentSlide() {
+  const wrapper = document.getElementById("swipeWrapper");
+  const targetSlide = document.getElementById(slides[currentSlideIndex]);
+  if (!wrapper || !targetSlide) return;
+
+  wrapper.style.width = `${slides.length * 100}vw`;
+  wrapper.style.transform = `translateX(-${targetSlide.offsetLeft}px)`;
+
+  // Reset scroll offset on container/window to prevent browser native scroll double-shifting
+  const container = document.querySelector(".swipe-container");
+  if (container) {
+    container.scrollLeft = 0;
+  }
+  window.scrollTo(0, 0);
+}
+
+function scheduleSliderAlignment() {
+  alignSliderToCurrentSlide();
+  requestAnimationFrame(() => {
+    alignSliderToCurrentSlide();
+    requestAnimationFrame(alignSliderToCurrentSlide);
+  });
+}
+
 function goToSlide(index) {
   if (index < 0 || index >= slides.length) return;
   currentSlideIndex = index;
@@ -474,12 +499,7 @@ function goToSlide(index) {
   }
   
   // Transition the slider wrapper horizontally
-  const wrapper = document.getElementById("swipeWrapper");
-  if (wrapper) {
-    const targetSlide = document.getElementById(slides[index]);
-    wrapper.style.width = `${slides.length * 100}vw`;
-    wrapper.style.transform = `translateX(-${targetSlide?.offsetLeft || 0}px)`;
-  }
+  scheduleSliderAlignment();
   
   // Highlight active link in Navbar header
   const navLinks = document.querySelectorAll(".nav-menu .nav-link");
@@ -522,6 +542,8 @@ function goToSlide(index) {
 
 // Expose goToSlide globally so inline triggers like hero RSVP button work
 window.goToSlide = goToSlide;
+window.addEventListener("load", scheduleSliderAlignment);
+window.addEventListener("resize", scheduleSliderAlignment);
 
 function nextSlide() {
   if (currentSlideIndex < slides.length - 1) {
@@ -543,6 +565,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initialize arrow buttons visibility
   const initialSlideIndex = Math.max(0, slides.indexOf(window.location.hash.replace("#", "")));
   goToSlide(initialSlideIndex);
+  scheduleSliderAlignment();
 
   // 2. Navbar click binders
   document.querySelectorAll(".nav-menu .nav-link").forEach((link) => {
