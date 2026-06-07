@@ -22,7 +22,7 @@ const DEFAULT_CONFIG = {
   groom: {
     name: "Elie Rakwe",
     bio: "",
-    avatar: "./assets/groom.jpeg"
+    avatar: "./assets/groom.png"
   },
   timeline: [
     {
@@ -92,7 +92,7 @@ function normalizeConfig(config) {
     nextConfig.bride.avatar = "./assets/bride.png";
   }
   if (nextConfig.groom.avatar && nextConfig.groom.avatar.includes("unsplash.com")) {
-    nextConfig.groom.avatar = "./assets/groom.jpeg";
+    nextConfig.groom.avatar = "./assets/groom.png";
   }
   if (!nextConfig.musicUrl || nextConfig.musicUrl.includes("soundhelix.com")) {
     nextConfig.musicUrl = "./assets/music.mp3";
@@ -382,7 +382,7 @@ function applyContent(config) {
   if (groomName && config.groom) {
     groomName.textContent = config.groom.name;
     groomBio.textContent = config.groom.bio;
-    groomAvatar.src = config.groom.avatar || "./assets/groom.jpeg";
+    groomAvatar.src = config.groom.avatar || "./assets/groom.png";
   }
 
   // Ambient Audio Source Update
