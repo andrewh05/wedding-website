@@ -8,13 +8,18 @@
   const client = hasSupabaseConfig && window.supabase
     ? window.supabase.createClient(config.url, config.anonKey)
     : null;
-  const serverApiBase = config.serverApiBase || "/api/db";
+  const canUseLocalServerApi = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  const serverApiBase = config.serverApiBase || (canUseLocalServerApi ? "/api/db" : "");
 
   function isEnabled() {
     return Boolean(client || serverApiBase);
   }
 
   async function callServerApi(action, options = {}) {
+    if (!serverApiBase) {
+      throw new Error("Supabase is not configured for this deployment.");
+    }
+
     const url = new URL(serverApiBase, window.location.origin);
     url.searchParams.set("action", action);
 
