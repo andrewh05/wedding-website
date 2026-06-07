@@ -712,6 +712,13 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 0.85rem;
 }
 
+.rsvp-deadline-note {
+  margin: 0.75rem 0 0;
+  color: var(--theme-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
 .rsvp-alert {
   padding: 1rem;
   border-radius: var(--border-radius-sm);

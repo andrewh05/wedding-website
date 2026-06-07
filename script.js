@@ -395,6 +395,10 @@ function applyContent(config) {
       sourceEl.src = nextMusicUrl;
       audioEl.load(); // Reload track source
     }
+
+    if (window.startWeddingMusic) {
+      window.startWeddingMusic();
+    }
   }
 
   // Dynamic Event Timeline Builder
@@ -791,12 +795,20 @@ const musicStatusText = document.getElementById("musicStatusText");
 const bgAudio = document.getElementById("bgAudio");
 
 if (musicPlayerBtn && bgAudio) {
+  let userPausedMusic = false;
+
   const setMusicState = (isPlaying, label) => {
     musicWave.classList.toggle("paused", !isPlaying);
     musicStatusText.textContent = label || (isPlaying ? "Mute Music" : "Play Music");
   };
 
-  const playMusic = () => bgAudio.play().then(() => {
+  const playMusic = () => {
+    if (userPausedMusic) return Promise.resolve(false);
+
+    bgAudio.muted = false;
+    bgAudio.volume = 0.85;
+
+    return bgAudio.play().then(() => {
     setMusicState(true);
     return true;
   }).catch((err) => {
@@ -804,6 +816,7 @@ if (musicPlayerBtn && bgAudio) {
     setMusicState(false, "Tap Music");
     return false;
   });
+  };
 
   const unlockAutoplay = () => {
     if (!bgAudio.paused) return;
@@ -816,17 +829,27 @@ if (musicPlayerBtn && bgAudio) {
 
   musicPlayerBtn.addEventListener("click", () => {
     if (bgAudio.paused) {
+      userPausedMusic = false;
       playMusic();
     } else {
+      userPausedMusic = true;
       bgAudio.pause();
       setMusicState(false);
     }
   });
 
+  window.startWeddingMusic = playMusic;
   setMusicState(false, "Starting Music");
   playMusic();
-  window.addEventListener("pointerdown", unlockAutoplay, { once: true });
-  window.addEventListener("keydown", unlockAutoplay, { once: true });
+
+  ["pointerdown", "touchstart", "mousedown", "click", "keydown"].forEach((eventName) => {
+    window.addEventListener(eventName, unlockAutoplay, { passive: true });
+  });
+
+  window.addEventListener("load", unlockAutoplay);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) unlockAutoplay();
+  });
 }
 
 // --- LIVE EDITING STORAGE LISTENER ---
