@@ -388,7 +388,6 @@ function buildRsvpInviteLink(id, guestLimit = 1) {
   const baseUrl = new URL("index.html", window.location.href);
   baseUrl.searchParams.set("rsvp", id);
   baseUrl.searchParams.set("limit", normalizeInviteGuestLimit(guestLimit));
-  baseUrl.hash = "rsvp";
   return baseUrl.toString();
 }
 

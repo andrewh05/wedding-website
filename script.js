@@ -268,7 +268,6 @@ async function loadRsvpInvite() {
       guestLimit: urlGuestLimit
     };
     updateGuestLimitDisplay();
-    goToSlide(slides.indexOf("rsvp"));
   }
 
   if (!window.WeddingSupabase?.isEnabled()) return;
@@ -307,7 +306,6 @@ async function loadRsvpInvite() {
       guestInput.value = isRejected ? "0" : String(Math.min(invite.guestCount || 1, inviteLimit));
     }
 
-    goToSlide(slides.indexOf("rsvp"));
     scheduleSliderAlignment();
   } catch (error) {
     console.error("RSVP invitation load failed:", error);
@@ -571,7 +569,10 @@ document.addEventListener("DOMContentLoaded", () => {
   loadConfiguration();
 
   // Initialize arrow buttons visibility
-  const initialSlideIndex = Math.max(0, slides.indexOf(window.location.hash.replace("#", "")));
+  const hasRsvpInvite = new URLSearchParams(window.location.search).has("rsvp");
+  const initialSlideIndex = hasRsvpInvite
+    ? 0
+    : Math.max(0, slides.indexOf(window.location.hash.replace("#", "")));
   goToSlide(initialSlideIndex);
   scheduleSliderAlignment();
 
