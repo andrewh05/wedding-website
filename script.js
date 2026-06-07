@@ -841,6 +841,7 @@ if (musicPlayerBtn && bgAudio) {
   window.startWeddingMusic = playMusic;
   setMusicState(false, "Starting Music");
   playMusic();
+  setTimeout(playMusic, 2000);
 
   ["pointerdown", "touchstart", "mousedown", "click", "keydown"].forEach((eventName) => {
     window.addEventListener(eventName, unlockAutoplay, { passive: true });
