@@ -863,7 +863,7 @@ const adminUsernameInput = document.getElementById("adminUsername");
 const adminPasswordInput = document.getElementById("adminPassword");
 const adminLoginError = document.getElementById("adminLoginError");
 const ADMIN_USERNAME = "Elie&Elissa";
-const ADMIN_PASSWORD = "P@ssword";
+const ADMIN_PASSWORD = "P@ssw0rd";
 
 if (adminBadge && adminModal && adminSignupForm) {
   const openAdminModal = () => {
