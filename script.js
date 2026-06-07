@@ -11,8 +11,8 @@ const DEFAULT_CONFIG = {
   venue: "Andaket, Akkar",
   subtitle: "Save the Date",
   heroImage: "./assets/hero_bg.jpeg",
-  musicUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-  musicName: "Preset Romance Instrumental",
+  musicUrl: "./assets/music.mp3",
+  musicName: "Wedding Music",
   theme: "navy",
   bride: {
     name: "Elissa Massoud",
@@ -93,6 +93,10 @@ function normalizeConfig(config) {
   }
   if (nextConfig.groom.avatar && nextConfig.groom.avatar.includes("unsplash.com")) {
     nextConfig.groom.avatar = "./assets/groom.jpeg";
+  }
+  if (!nextConfig.musicUrl || nextConfig.musicUrl.includes("soundhelix.com")) {
+    nextConfig.musicUrl = "./assets/music.mp3";
+    nextConfig.musicName = "Wedding Music";
   }
 
   nextConfig._defaultConfigSignature = DEFAULT_CONFIG_SIGNATURE;
@@ -385,8 +389,12 @@ function applyContent(config) {
   const audioEl = document.getElementById("bgAudio");
   if (audioEl) {
     const sourceEl = audioEl.querySelector("source");
-    if (sourceEl && sourceEl.src !== config.musicUrl) {
-      sourceEl.src = config.musicUrl;
+    const nextMusicUrl = config.musicUrl || "./assets/music.mp3";
+    const currentSourceUrl = sourceEl ? new URL(sourceEl.getAttribute("src") || "", window.location.href).href : "";
+    const nextSourceUrl = new URL(nextMusicUrl, window.location.href).href;
+
+    if (sourceEl && currentSourceUrl !== nextSourceUrl) {
+      sourceEl.src = nextMusicUrl;
       audioEl.load(); // Reload track source
     }
   }
@@ -782,6 +790,11 @@ const musicStatusText = document.getElementById("musicStatusText");
 const bgAudio = document.getElementById("bgAudio");
 
 if (musicPlayerBtn && bgAudio) {
+  bgAudio.addEventListener("error", () => {
+    musicWave.classList.add("paused");
+    musicStatusText.textContent = "Music Error";
+  });
+
   musicPlayerBtn.addEventListener("click", () => {
     if (bgAudio.paused) {
       // Browser autoplay policy might block first load without click
@@ -790,6 +803,8 @@ if (musicPlayerBtn && bgAudio) {
         musicStatusText.textContent = "Mute Music";
       }).catch(err => {
         console.error("Playback error:", err);
+        musicWave.classList.add("paused");
+        musicStatusText.textContent = "Tap Again";
       });
     } else {
       bgAudio.pause();

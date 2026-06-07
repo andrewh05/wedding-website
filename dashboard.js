@@ -14,8 +14,8 @@ const DEFAULT_CONFIG = {
   venue: "Andaket, Akkar",
   subtitle: "Save the Date",
   heroImage: "./assets/hero_bg.jpeg",
-  musicUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-  musicName: "Preset Romance Instrumental",
+  musicUrl: "./assets/music.mp3",
+  musicName: "Wedding Music",
   theme: "navy",
   bride: {
     name: "Elissa Massoud",
@@ -94,6 +94,10 @@ function normalizeConfig(nextConfig) {
   }
   if (normalizedConfig.groom.avatar && normalizedConfig.groom.avatar.includes("unsplash.com")) {
     normalizedConfig.groom.avatar = "./assets/groom.png";
+  }
+  if (!normalizedConfig.musicUrl || normalizedConfig.musicUrl.includes("soundhelix.com")) {
+    normalizedConfig.musicUrl = "./assets/music.mp3";
+    normalizedConfig.musicName = "Wedding Music";
   }
 
   normalizedConfig._defaultConfigSignature = DEFAULT_CONFIG_SIGNATURE;
