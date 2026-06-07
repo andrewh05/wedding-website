@@ -64,9 +64,6 @@
       guest_limit: guestLimit,
       email: rsvp.email,
       attendance,
-      meal: rsvp.meal || "-",
-      dietary: rsvp.dietary || "-",
-      song: rsvp.song || "-",
       submitted_at: rsvp.timestamp || new Date().toISOString()
     };
   }
@@ -87,9 +84,9 @@
       guestLimit,
       email: row.email,
       attendance,
-      meal: row.meal,
-      dietary: row.dietary,
-      song: row.song,
+      meal: row.meal || "-",
+      dietary: row.dietary || "-",
+      song: row.song || "-",
       timestamp: row.submitted_at || row.created_at
     };
   }
